@@ -32,9 +32,7 @@ public sealed class ServerConnection
     public static string HostIp;
     public static int HostPort;
     public static string ConnectionValue;
-
-
-
+    
     /// <summary>
     /// Getter and creator of the ServerConnecton class.
     /// </summary>
