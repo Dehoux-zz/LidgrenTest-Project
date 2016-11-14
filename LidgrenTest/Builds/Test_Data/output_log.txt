@@ -6,26 +6,26 @@ Direct3D:
     Vendor:   NVIDIA
     VRAM:     2017 MB
 Begin MonoManager ReloadAssembly
-Platform assembly: C:\Users\Edutainment games\Desktop\Unity Multiplayer Startup\LidgrenTest\Builds\Test_Data\Managed\UnityEngine.dll (this message is harmless)
-Loading C:\Users\Edutainment games\Desktop\Unity Multiplayer Startup\LidgrenTest\Builds\Test_Data\Managed\UnityEngine.dll into Unity Child Domain
-Platform assembly: C:\Users\Edutainment games\Desktop\Unity Multiplayer Startup\LidgrenTest\Builds\Test_Data\Managed\Assembly-CSharp-firstpass.dll (this message is harmless)
-Loading C:\Users\Edutainment games\Desktop\Unity Multiplayer Startup\LidgrenTest\Builds\Test_Data\Managed\Assembly-CSharp-firstpass.dll into Unity Child Domain
-Platform assembly: C:\Users\Edutainment games\Desktop\Unity Multiplayer Startup\LidgrenTest\Builds\Test_Data\Managed\Assembly-CSharp.dll (this message is harmless)
-Loading C:\Users\Edutainment games\Desktop\Unity Multiplayer Startup\LidgrenTest\Builds\Test_Data\Managed\Assembly-CSharp.dll into Unity Child Domain
-Platform assembly: C:\Users\Edutainment games\Desktop\Unity Multiplayer Startup\LidgrenTest\Builds\Test_Data\Managed\UnityEngine.UI.dll (this message is harmless)
-Loading C:\Users\Edutainment games\Desktop\Unity Multiplayer Startup\LidgrenTest\Builds\Test_Data\Managed\UnityEngine.UI.dll into Unity Child Domain
-Platform assembly: C:\Users\Edutainment games\Desktop\Unity Multiplayer Startup\LidgrenTest\Builds\Test_Data\Managed\UnityEngine.Networking.dll (this message is harmless)
-Loading C:\Users\Edutainment games\Desktop\Unity Multiplayer Startup\LidgrenTest\Builds\Test_Data\Managed\UnityEngine.Networking.dll into Unity Child Domain
-Platform assembly: C:\Users\Edutainment games\Desktop\Unity Multiplayer Startup\LidgrenTest\Builds\Test_Data\Managed\Lidgren.Network.dll (this message is harmless)
-Loading C:\Users\Edutainment games\Desktop\Unity Multiplayer Startup\LidgrenTest\Builds\Test_Data\Managed\Lidgren.Network.dll into Unity Child Domain
-- Completed reload, in  0.295 seconds
-Platform assembly: C:\Users\Edutainment games\Desktop\Unity Multiplayer Startup\LidgrenTest\Builds\Test_Data\Managed\System.Core.dll (this message is harmless)
-Platform assembly: C:\Users\Edutainment games\Desktop\Unity Multiplayer Startup\LidgrenTest\Builds\Test_Data\Managed\System.dll (this message is harmless)
+Platform assembly: C:\Users\Edutainment games\Documents\Repositories\LidgrenTest-Project\LidgrenTest\Builds\Test_Data\Managed\UnityEngine.dll (this message is harmless)
+Loading C:\Users\Edutainment games\Documents\Repositories\LidgrenTest-Project\LidgrenTest\Builds\Test_Data\Managed\UnityEngine.dll into Unity Child Domain
+Platform assembly: C:\Users\Edutainment games\Documents\Repositories\LidgrenTest-Project\LidgrenTest\Builds\Test_Data\Managed\Assembly-CSharp-firstpass.dll (this message is harmless)
+Loading C:\Users\Edutainment games\Documents\Repositories\LidgrenTest-Project\LidgrenTest\Builds\Test_Data\Managed\Assembly-CSharp-firstpass.dll into Unity Child Domain
+Platform assembly: C:\Users\Edutainment games\Documents\Repositories\LidgrenTest-Project\LidgrenTest\Builds\Test_Data\Managed\Assembly-CSharp.dll (this message is harmless)
+Loading C:\Users\Edutainment games\Documents\Repositories\LidgrenTest-Project\LidgrenTest\Builds\Test_Data\Managed\Assembly-CSharp.dll into Unity Child Domain
+Platform assembly: C:\Users\Edutainment games\Documents\Repositories\LidgrenTest-Project\LidgrenTest\Builds\Test_Data\Managed\UnityEngine.UI.dll (this message is harmless)
+Loading C:\Users\Edutainment games\Documents\Repositories\LidgrenTest-Project\LidgrenTest\Builds\Test_Data\Managed\UnityEngine.UI.dll into Unity Child Domain
+Platform assembly: C:\Users\Edutainment games\Documents\Repositories\LidgrenTest-Project\LidgrenTest\Builds\Test_Data\Managed\UnityEngine.Networking.dll (this message is harmless)
+Loading C:\Users\Edutainment games\Documents\Repositories\LidgrenTest-Project\LidgrenTest\Builds\Test_Data\Managed\UnityEngine.Networking.dll into Unity Child Domain
+Platform assembly: C:\Users\Edutainment games\Documents\Repositories\LidgrenTest-Project\LidgrenTest\Builds\Test_Data\Managed\Lidgren.Network.dll (this message is harmless)
+Loading C:\Users\Edutainment games\Documents\Repositories\LidgrenTest-Project\LidgrenTest\Builds\Test_Data\Managed\Lidgren.Network.dll into Unity Child Domain
+- Completed reload, in  0.210 seconds
+Platform assembly: C:\Users\Edutainment games\Documents\Repositories\LidgrenTest-Project\LidgrenTest\Builds\Test_Data\Managed\System.Core.dll (this message is harmless)
+Platform assembly: C:\Users\Edutainment games\Documents\Repositories\LidgrenTest-Project\LidgrenTest\Builds\Test_Data\Managed\System.dll (this message is harmless)
 desktop: 1920x1080 60Hz; virtual: 1920x1080 at 0,0
 <RI> Initializing input.
 XInput1_3.dll not found. Trying XInput9_1_0.dll instead...
 <RI> Input initialized.
 <RI> Initialized touch support.
-UnloadTime: 0.749889 ms
+UnloadTime: 0.596574 ms
 Setting up 1 worker threads for Enlighten.
-  Thread -> id: 31ec -> priority: 1 
+  Thread -> id: 2ba8 -> priority: 1 

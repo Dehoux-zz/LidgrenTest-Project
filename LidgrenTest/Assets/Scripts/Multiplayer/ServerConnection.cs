@@ -15,7 +15,8 @@ public enum PackageTypes
     PlayerMovement,
     AddPlayer,
     Beat,
-    KeepAlive
+    KeepAlive,
+    PlayerJump
 }
 
 public sealed class ServerConnection
@@ -134,6 +135,13 @@ public sealed class ServerConnection
                                 player.NetIncomingMessageMovePlayer(incomingMessage);
                             }
                             break;
+                        case PackageTypes.PlayerJump:
+                            {
+                                int playerId = incomingMessage.ReadInt16();
+                                Player player = NetworkManager.Instance.FindPlayer(playerId);
+                                player.NetIncomingMessageJumpPlayer(incomingMessage);
+                            }
+                            break;
                         case PackageTypes.Beat:
                             {
                                 Player localPlayer = NetworkManager.Instance.GetLocalPlayer();
@@ -153,7 +161,6 @@ public sealed class ServerConnection
                                 Roundtriptime = incomingMessage.ReadFloat();
                             }
                             break;
-
                     }
 
 

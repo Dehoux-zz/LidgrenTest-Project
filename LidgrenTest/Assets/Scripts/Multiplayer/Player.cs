@@ -19,8 +19,6 @@ public class Player : MonoBehaviour
 
     public float movementSpeed = 0.25f;
 
-    private float _velocityX;
-    private float _velocityY;
     private Vector2 _realPosition;
 
     //Physics and movement properties units/second
@@ -28,7 +26,7 @@ public class Player : MonoBehaviour
     float maxSpeed = 5f;
     float gravity = 0.2f;
     float maxFall = 200f;
-    float jumpVelocity = 18f;
+    float jumpVelocity = 10f;
 
     bool lastInput;
     float jumpPressedTime;
@@ -39,8 +37,11 @@ public class Player : MonoBehaviour
     Rect box;
 
     Vector2 velocity;
+    Vector2 networkVelocity;
+    Vector2 networkPlayerPosition;
 
     bool grounded = false;
+    SpriteRenderer spriteRenderer;
 
     int horizontalRays = 6;
     int verticalRays = 4;
@@ -49,6 +50,7 @@ public class Player : MonoBehaviour
     {
         layerMask = 1 << LayerMask.NameToLayer("normalCollisions");
         _realPosition = gameObject.transform.position;
+        spriteRenderer = gameObject.GetComponent<SpriteRenderer>();
     }
 
     void FixedUpdate()
@@ -56,12 +58,6 @@ public class Player : MonoBehaviour
         if (isMine)
         {
             Bounds bounds = GetComponent<Collider2D>().bounds;
-            box = new Rect(
-                bounds.min.x,
-                bounds.min.y,
-                bounds.size.x,
-                bounds.size.y
-            );
 
             if (!grounded)
                 velocity = new Vector2(velocity.x, Mathf.Max(velocity.y - gravity, -maxFall));
@@ -75,18 +71,16 @@ public class Player : MonoBehaviour
                 for (int i = 0; i < verticalRays; i++)
                 {
                     float lerpAmount = i / ((float)verticalRays - 1);
-                    Debug.Log(i + "/ " + verticalRays + "-1 = " + lerpAmount);
 
                     Vector2 origin = Vector2.Lerp(startPoint, endPoint, lerpAmount);
 
                     RaycastHit2D hitInfo = Physics2D.Raycast(origin, Vector2.down, distance, layerMask);
-
                     Debug.DrawRay(origin, Vector2.down * distance, Color.red);
-                    // <------------------
+
                     if (hitInfo)
                     {
                         grounded = true;
-                        transform.Translate(Vector2.down * (hitInfo.distance - box.height / 2));
+                        transform.Translate(Vector2.down * (hitInfo.distance - bounds.extents.y));
                         velocity = new Vector2(velocity.x, 0);
                         break;
                     }
@@ -115,24 +109,27 @@ public class Player : MonoBehaviour
 
             if (velocity.x != 0) //physics checks
             {
-                Vector2 startPoint = new Vector2(box.center.x, box.yMin);
-                Vector2 endPoint = new Vector2(box.center.x, box.yMax);
+                Vector2 startPoint = new Vector2(bounds.center.x, bounds.min.y + 0.1f);
+                Vector2 endPoint = new Vector2(bounds.center.x, bounds.max.y - 0.1f);
 
                 RaycastHit2D hitinfo;
 
-                float sideRayLenght = box.width / 2 + Mathf.Abs(newVelocityX * Time.deltaTime);
-                Vector2 direction = newVelocityX > 0 ? Vector2.left : Vector2.right;
+                float distance = bounds.extents.x + Mathf.Abs(newVelocityX * Time.deltaTime);
+
+                Vector2 direction = newVelocityX > 0 ? Vector2.right : Vector2.left;
 
                 for (int i = 0; i < horizontalRays; i++)
                 {
-                    float lerpAmount = (float)i / (float)(horizontalRays - 1);
+                    float lerpAmount = i / ((float)horizontalRays - 1);
                     Vector2 origin = Vector2.Lerp(startPoint, endPoint, lerpAmount);
 
-                    hitinfo = Physics2D.Raycast(origin, direction, sideRayLenght);
+                    hitinfo = Physics2D.Raycast(origin, direction, distance, layerMask);
 
-                    if(hitinfo)
+                    Debug.DrawRay(origin, direction * distance, Color.red);
+
+                    if (hitinfo)
                     {
-                        transform.Translate(direction * (hitinfo.distance - box.width / 2));
+                        transform.Translate(direction * (hitinfo.distance - bounds.extents.x));
                         velocity = new Vector2(0, velocity.y);
                         break;
                     }
@@ -140,33 +137,50 @@ public class Player : MonoBehaviour
                 }
             }
 
-            //float HorizontalAxis = Input.GetAxis("Horizontal");
-            //transform.position = new Vector2(transform.position.x + (HorizontalAxis * 0.25f), transform.position.y);
-        
-            //        if(HorizontalAxis != _velocityY)
-            //            NetOutgoingMessageMovePlayer();
+            if (networkVelocity.x != velocity.x || networkVelocity.y != velocity.y)
+            {
+                NetOutgoingMessagePlayerMove();
+            }
 
-            //        _velocityX = HorizontalAxis;
-            //        _velocityY = 0f;
+
+            networkVelocity.x = velocity.x;
+            networkVelocity.y = velocity.y;
+
+            if(grounded)
+            {
+                if (spriteRenderer.color == Color.green)
+                {
+                    spriteRenderer.color = Color.blue;
+                }
+            }
+
         }
         else
         {
-            float xMove = _velocityX * movementSpeed * Time.deltaTime;
-            float yMove = _velocityY * movementSpeed * Time.deltaTime;
+            if(grounded)
+            {
+                if (spriteRenderer.color == Color.green)
+                {
+                    spriteRenderer.color = Color.red;
+                }
+            }
+            //float xMove = networkVelocity.x * movementSpeed * Time.deltaTime;
+            //float yMove = networkVelocity.y * movementSpeed * Time.deltaTime;
 
-            if (xMove < 0.001 && xMove > 0 || xMove < 0 && xMove > -0.001)
-                xMove = 0;
-            if (yMove < 0.001 && yMove > 0 || yMove < 0 && yMove > -0.001)
-                yMove = 0;
+            //if (xMove <= movementSpeed && xMove > 0 || xMove < 0 && xMove >= -movementSpeed)
+            //    xMove = 0;
+            //if (yMove <= movementSpeed && yMove > 0 || yMove < 0 && yMove >= -movementSpeed)
+            //    yMove = 0;
 
-            Vector2 movedistance = new Vector2(xMove * 100, yMove * 100); //Schiet over!
+            //Vector2 movedistance = new Vector2(xMove, yMove);
 
-            //Vector2 curPositon = gameObject.transform.position;
-            //curPositon += movedistance;
+            ////Vector2 curPositon = gameObject.transform.position;
+            ////curPositon += movedistance;
 
-            _realPosition += movedistance;
+            //_realPosition += movedistance;
 
-            transform.position = Vector3.Lerp(gameObject.transform.position, _realPosition, Time.deltaTime * 3);
+            //transform.position = Vector3.Lerp(gameObject.transform.position, _realPosition, Time.deltaTime);
+
         }
 
 
@@ -175,87 +189,59 @@ public class Player : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetButtonDown("Jump") && grounded)
+        if (isMine && Input.GetButtonDown("Jump") && grounded)
         {
             velocity = new Vector2(velocity.x, jumpVelocity);
+            spriteRenderer.color = Color.green;
+            NetOutgoingMessagePlayerJump();
         }
     }
     
     void LateUpdate()
     {
         transform.Translate(velocity * Time.deltaTime);
+
+        if (!isMine && velocity == Vector2.zero)
+        {
+            transform.position = Vector2.Lerp(gameObject.transform.position, networkPlayerPosition, Time.deltaTime * 10 * acceleration);
+        }
     }
 
-    //void Update()
+    //public Vector2 GetNetworkPositionCheck()
     //{
-    //    if (isMine)
-    //    {
-    //        float HorizontalAxis = Input.GetAxis("Horizontal");
-    //        float VerticalAxis = Input.GetAxis("Vertical");
-
-    //        transform.position = new Vector2(transform.position.x + (HorizontalAxis * movementSpeed), transform.position.y + (VerticalAxis * 0.25f));
-            
-    //        if(HorizontalAxis != _velocityX || VerticalAxis != _velocityY)
-    //            NetOutgoingMessageMovePlayer();
-
-    //        _velocityX = HorizontalAxis;
-    //        _velocityY = VerticalAxis;
-
-    //    }
-    //    else
-    //    {
-
-    //        float xMove = _velocityX * movementSpeed * Time.deltaTime;
-    //        float yMove = _velocityY * movementSpeed * Time.deltaTime;
-
-    //        if (xMove < 0.001 && xMove > 0 || xMove < 0 && xMove > -0.001)
-    //            xMove = 0;
-    //        if (yMove < 0.001 && yMove > 0 || yMove < 0 && yMove > -0.001)
-    //            yMove = 0;
-
-    //        Vector2 movedistance = new Vector2(xMove*100, yMove*100); //Schiet over!
-
-    //        //Vector2 curPositon = gameObject.transform.position;
-    //        //curPositon += movedistance;
-
-    //        _realPosition += movedistance;
-
-    //        transform.position = Vector3.Lerp(gameObject.transform.position, _realPosition, Time.deltaTime * 3);
-    //    }
+    //    float newx = networkPlayerPosition.x + movementSpeed * velocity.x;
+    //    float newy = networkPlayerPosition.y + movementSpeed * velocity.y;
+    //    return new Vector2(newx, newy);
     //}
 
-    public void PushUpdate(float x, float y, float xvel, float yvel, float triptime)
-    {
-        //Player is updating their position.
-        float newx = x + movementSpeed * xvel * triptime;
-        float newy = y + movementSpeed * yvel * triptime;
-
-        //This is where we predict they are right now.
-        _realPosition = new Vector2(newx, newy);
-
-        _velocityX = xvel;
-        _velocityY = yvel;
-    }
-
-    public void NetOutgoingMessageMovePlayer()
+    public void NetOutgoingMessagePlayerMove()
     {
         NetOutgoingMessage netOutgoingMessage = ServerConnection.CreateNetOutgoingMessage();
         netOutgoingMessage.Write((byte)PackageTypes.PlayerMovement);
         netOutgoingMessage.Write((Vector2)transform.position);
-        netOutgoingMessage.Write(_velocityX);
-        netOutgoingMessage.Write(_velocityY);
+        netOutgoingMessage.Write(velocity);
+        netOutgoingMessage.Write(grounded);
         ServerConnection.SendNetOutgoingMessage(netOutgoingMessage, NetDeliveryMethod.ReliableOrdered, 10);
+    }
+
+    public void NetOutgoingMessagePlayerJump()
+    {
+        NetOutgoingMessage netOutgoingMessage = ServerConnection.CreateNetOutgoingMessage();
+        netOutgoingMessage.Write((byte)PackageTypes.PlayerJump);
+        ServerConnection.SendNetOutgoingMessage(netOutgoingMessage, NetDeliveryMethod.ReliableOrdered, 11);
     }
 
     public void NetIncomingMessageMovePlayer(NetIncomingMessage netIncomingMessage)
     {
-        Vector2 playerPosition = netIncomingMessage.ReadVector2();
-        _velocityX = netIncomingMessage.ReadFloat();
-        _velocityY = netIncomingMessage.ReadFloat();
+        networkPlayerPosition = netIncomingMessage.ReadVector2();
+        velocity = netIncomingMessage.ReadVector2();
+        grounded = netIncomingMessage.ReadBoolean();
+    }
 
-        float triptime = netIncomingMessage.ReadFloat() + ServerConnection.Roundtriptime;
-        
-        PushUpdate(playerPosition.x, playerPosition.y, _velocityX, _velocityY, triptime);
+    public void NetIncomingMessageJumpPlayer(NetIncomingMessage netIncomingMessage)
+    {
+        spriteRenderer.color = Color.green;
+        grounded = false;
     }
 
     void OnCollisionEnter(Collision col)

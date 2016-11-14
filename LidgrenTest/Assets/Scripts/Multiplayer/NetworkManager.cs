@@ -33,7 +33,7 @@ public sealed class NetworkManager : MonoBehaviour
         }
     }
 
-    void Start()
+    void Awake()
     {
         DebugConsole.Log("Initialisation NetworkManager");
 
