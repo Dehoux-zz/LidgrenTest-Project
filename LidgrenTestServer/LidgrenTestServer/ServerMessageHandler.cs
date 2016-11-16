@@ -21,7 +21,7 @@ namespace LidgrenTestServer
                         break;
                     case NetIncomingMessageType.Data:
 
-                        Player player = _serverManager.ActivePlayers.Find(p => p.Connection == incomingMessage.SenderConnection);
+                        Player player = _serverManager.SearchPlayer(incomingMessage.SenderConnection);
                         if (player == null || incomingMessage.LengthBytes < 1)
                             break;
                         switch ((PacketTypes)incomingMessage.ReadByte())

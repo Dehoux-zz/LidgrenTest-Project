@@ -10,7 +10,7 @@ namespace LidgrenTestServer
     public class ServerManager
     {
         public NetServer Server { get; private set; }
-        public List<Player> ActivePlayers { get; private set; }
+        private List<Player> _activePlayers;
         private NetPeerConfiguration _config;
         private int _idCount;
         private string _approvalMessage;
@@ -62,7 +62,7 @@ namespace LidgrenTestServer
 
         public void StartServer()
         {
-            ActivePlayers = new List<Player>();
+            _activePlayers = new List<Player>();
 
             Server = new NetServer(_config);
             Server.RegisterReceivedCallback(ServerMessageHandler.Register);
@@ -97,7 +97,7 @@ namespace LidgrenTestServer
                 // Handle dropping players and long idle connections. Note Client must send a KeepAlive packet within 15s
                 if (NetTime.Now > _last15Sec + 15)
                 {
-                    foreach (Player player in ActivePlayers)
+                    foreach (Player player in _activePlayers)
                     {
                         //Console.WriteLine("KeepAlive Check "+player.Name+" (Id"+player.Id+") "+ player.Connection.Status+" RTT "+player.Connection.AverageRoundtripTime +" keepAlive "+player.keepAlive+" vs. lastKeepAlive "+player.lastKeepAlive);
                         if (player.KeepAlive > player.LastKeepAlive)
@@ -117,7 +117,7 @@ namespace LidgrenTestServer
                 {
                     //Send a beat to all users. Because the server doesn't really know if they disconnected unless we are sending packets to them.
                     //Beats go out every 2 seconds.
-                    foreach (Player player in ActivePlayers)
+                    foreach (Player player in _activePlayers)
                     {
                         NetOutgoingMessage outgoingMessage = Server.CreateMessage();
                         outgoingMessage.Write((byte)PacketTypes.Beat);
@@ -143,7 +143,7 @@ namespace LidgrenTestServer
                 Console.WriteLine("Incoming message ConnectionApproval: Approved: " + incomingMessage.SenderConnection);
                 incomingMessage.SenderConnection.Approve();
 
-                if (ActivePlayers.Count == 0)
+                if (_activePlayers.Count == 0)
                     _idCount = 0;
 
                 AddPlayerToGame(incomingMessage);
@@ -164,12 +164,17 @@ namespace LidgrenTestServer
             _outgoingMessage.Write((Int16)player.Id);
             Server.SendMessage(_outgoingMessage, Server.Connections, NetDeliveryMethod.ReliableOrdered, 1);
 
-            ActivePlayers.Remove(player);
+            _activePlayers.Remove(player);
 
             _outgoingMessage = Server.CreateMessage();
             _outgoingMessage.Write((byte)PacketTypes.PlayerCount);
-            _outgoingMessage.Write((Int16)ActivePlayers.Count);
+            _outgoingMessage.Write((Int16)_activePlayers.Count);
             Server.SendMessage(_outgoingMessage, Server.Connections, NetDeliveryMethod.ReliableOrdered, 6);
+        }
+
+        public Player SearchPlayer(NetConnection connection)
+        {
+            return _activePlayers.Find(p => p.Connection == connection);
         }
 
         #endregion
@@ -181,7 +186,7 @@ namespace LidgrenTestServer
             Console.WriteLine("Assigning new player the name of: Player " + ++_idCount);
             Player newPlayer = new Player(_idCount, incomingMessage.SenderConnection, "Player " + _idCount, _beatnum);
 
-            ActivePlayers.Add(newPlayer);
+            _activePlayers.Add(newPlayer);
             Thread.Sleep(2000);
 
             _outgoingMessage = Server.CreateMessage();
@@ -200,7 +205,7 @@ namespace LidgrenTestServer
             newPlayer.SentPlayerToOthers(incomingMessage);
 
             //Send all otherPlayers to new player excl. himself
-            foreach (Player otherPlayer in ActivePlayers.Where(otherPlayer => otherPlayer.Id != newPlayer.Id))
+            foreach (Player otherPlayer in _activePlayers.Where(otherPlayer => otherPlayer.Id != newPlayer.Id))
             {
                 _outgoingMessage = Server.CreateMessage();
                 _outgoingMessage.Write((byte)PacketTypes.AddPlayer);
@@ -213,13 +218,13 @@ namespace LidgrenTestServer
             //Send the current playercount to current player (yes sending all isn't enough for new player)
             _outgoingMessage = Server.CreateMessage();
             _outgoingMessage.Write((byte)PacketTypes.PlayerCount);
-            _outgoingMessage.Write((Int16)ActivePlayers.Count);
+            _outgoingMessage.Write((Int16)_activePlayers.Count);
             Server.SendMessage(_outgoingMessage, incomingMessage.SenderConnection, NetDeliveryMethod.ReliableOrdered, 6);
 
             //Send the current playercount to all but current player
             _outgoingMessage = Server.CreateMessage();
             _outgoingMessage.Write((byte)PacketTypes.PlayerCount);
-            _outgoingMessage.Write((Int16)ActivePlayers.Count);
+            _outgoingMessage.Write((Int16)_activePlayers.Count);
             Server.SendToAll(_outgoingMessage, incomingMessage.SenderConnection, NetDeliveryMethod.ReliableOrdered, 6);
 
             //for (int i = 0; i < 100; i++)
@@ -250,7 +255,7 @@ namespace LidgrenTestServer
         {
             Console.WriteLine(incomingMessage.SenderConnection + " status changed. " + incomingMessage.SenderConnection.Status);
 
-            Player player = ActivePlayers.Find(p => p.Connection == incomingMessage.SenderConnection);
+            Player player = _activePlayers.Find(p => p.Connection == incomingMessage.SenderConnection);
 
             if (player == null)
             {
@@ -263,7 +268,7 @@ namespace LidgrenTestServer
             if (player.Connection.Status == NetConnectionStatus.Disconnected || player.Connection.Status == NetConnectionStatus.Disconnecting)
             {
                 //SendLobbyMessage("Server", player.Name + " (Id" + player.Id + ") has disconnected.");
-                ActivePlayers.Remove(player);
+                _activePlayers.Remove(player);
 
                 if (Server.Connections.Count > 0)
                 {
@@ -274,11 +279,11 @@ namespace LidgrenTestServer
 
                     _outgoingMessage = Server.CreateMessage();
                     _outgoingMessage.Write((byte)PacketTypes.PlayerCount);
-                    _outgoingMessage.Write((Int16)ActivePlayers.Count);
+                    _outgoingMessage.Write((Int16)_activePlayers.Count);
                     Server.SendMessage(_outgoingMessage, Server.Connections, NetDeliveryMethod.ReliableOrdered, 6);
                 }
             }
-            Console.WriteLine(player.Name + " (Id" + player.Id + ") status changed to " + status + " (" + reason + ") " + ActivePlayers.Count);
+            Console.WriteLine(player.Name + " (Id" + player.Id + ") status changed to " + status + " (" + reason + ") " + _activePlayers.Count);
         }
 
         #endregion
