@@ -8,3 +8,11 @@ C:\Users\Edutainment games\Desktop\Unity Multiplayer Startup\LidgrenTestServer\L
 C:\Users\Edutainment games\Desktop\Unity Multiplayer Startup\LidgrenTestServer\LidgrenTestServer\bin\Debug\Mono.CSharp.dll
 C:\Users\Edutainment games\Desktop\Unity Multiplayer Startup\LidgrenTestServer\LidgrenTestServer\bin\Debug\UnityEngine.dll
 C:\Users\Edutainment games\Desktop\Unity Multiplayer Startup\LidgrenTestServer\LidgrenTestServer\bin\Debug\UnityEngine.xml
+C:\Users\Edutainment games\Documents\Repositories\LidgrenTest-Project\LidgrenTestServer\LidgrenTestServer\bin\Debug\LidgrenTestServer.exe.config
+C:\Users\Edutainment games\Documents\Repositories\LidgrenTest-Project\LidgrenTestServer\LidgrenTestServer\obj\Debug\LidgrenTestServer.exe
+C:\Users\Edutainment games\Documents\Repositories\LidgrenTest-Project\LidgrenTestServer\LidgrenTestServer\obj\Debug\LidgrenTestServer.pdb
+C:\Users\Edutainment games\Documents\Repositories\LidgrenTest-Project\LidgrenTestServer\LidgrenTestServer\bin\Debug\LidgrenTestServer.exe
+C:\Users\Edutainment games\Documents\Repositories\LidgrenTest-Project\LidgrenTestServer\LidgrenTestServer\bin\Debug\LidgrenTestServer.pdb
+C:\Users\Edutainment games\Documents\Repositories\LidgrenTest-Project\LidgrenTestServer\LidgrenTestServer\bin\Debug\Lidgren.Network.dll
+C:\Users\Edutainment games\Documents\Repositories\LidgrenTest-Project\LidgrenTestServer\LidgrenTestServer\bin\Debug\UnityEngine.xml
+C:\Users\Edutainment games\Documents\Repositories\LidgrenTest-Project\LidgrenTestServer\LidgrenTestServer\obj\Debug\LidgrenTestServer.csprojResolveAssemblyReference.cache

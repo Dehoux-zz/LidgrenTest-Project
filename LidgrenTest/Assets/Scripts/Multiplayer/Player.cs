@@ -88,7 +88,7 @@ public class Player : MonoBehaviour
                     {
                         grounded = false;
                     }
-                }              
+                }
             }
 
             float horizontalAxis = Input.GetAxisRaw("Horizontal");
@@ -142,11 +142,13 @@ public class Player : MonoBehaviour
                 NetOutgoingMessagePlayerMove();
             }
 
+            //velocity.x = Mathf.Round(velocity.x * 100) / 100;
+            //velocity.y = Mathf.Round(velocity.y * 100) / 100;
 
             networkVelocity.x = velocity.x;
             networkVelocity.y = velocity.y;
 
-            if(grounded)
+            if (grounded)
             {
                 if (spriteRenderer.color == Color.green)
                 {
@@ -157,7 +159,7 @@ public class Player : MonoBehaviour
         }
         else
         {
-            if(grounded)
+            if (grounded)
             {
                 if (spriteRenderer.color == Color.green)
                 {
@@ -196,7 +198,7 @@ public class Player : MonoBehaviour
             NetOutgoingMessagePlayerJump();
         }
     }
-    
+
     void LateUpdate()
     {
         transform.Translate(velocity * Time.deltaTime);

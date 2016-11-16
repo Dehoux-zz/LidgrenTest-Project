@@ -39,13 +39,13 @@ using System.Threading;
 class SocketPolicyServer {
 
 	const string PolicyFileRequest = "<policy-file-request/>";
-	static byte[] request = Encoding.UTF8.GetBytes (PolicyFileRequest);
-	private byte[] policy;
+	static byte[] _request = Encoding.UTF8.GetBytes (PolicyFileRequest);
+	private byte[] _policy;
 	private int _policyPort = 843;
-	private Socket listen_socket;
-	private Thread runner;
+	private Socket _listenSocket;
+	private Thread _runner;
 
-	private AsyncCallback accept_cb;
+	private AsyncCallback _acceptCb;
 	
 	public int PolicyPort
 		{
@@ -58,7 +58,7 @@ class SocketPolicyServer {
 		{
 			Socket = s;
 			// the only answer to a single request (so it's always the same length)
-			Buffer = new byte [request.Length];
+			Buffer = new byte [_request.Length];
 			Length = 0;
 		}
 
@@ -70,7 +70,7 @@ class SocketPolicyServer {
 	public SocketPolicyServer (string xml)
 	{
 		// transform the policy to a byte array (a single time)
-		policy = Encoding.UTF8.GetBytes (xml);
+		_policy = Encoding.UTF8.GetBytes (xml);
 	}
 	
 	public SocketPolicyServer (string xml, int port) 
@@ -83,10 +83,10 @@ class SocketPolicyServer {
 	{
 		int code=0;
 		try {
-			listen_socket = new Socket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-			listen_socket.Bind (new IPEndPoint (IPAddress.Any, _policyPort));
-			listen_socket.Listen (500);
-			listen_socket.Blocking = false;
+			_listenSocket = new Socket (AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+			_listenSocket.Bind (new IPEndPoint (IPAddress.Any, _policyPort));
+			_listenSocket.Listen (500);
+			_listenSocket.Blocking = false;
 			Console.WriteLine(" Policy service started on Port: "+_policyPort);
 		}
 		catch (SocketException se) {
@@ -102,15 +102,15 @@ class SocketPolicyServer {
 			return code;
 		}
 
-		runner = new Thread (new ThreadStart (RunServer));
-		runner.Start ();
+		_runner = new Thread (new ThreadStart (RunServer));
+		_runner.Start ();
 		return code;
 	}
 
 	void RunServer ()
 	{
-		accept_cb = new AsyncCallback (OnAccept);
-		listen_socket.BeginAccept (accept_cb, null);
+		_acceptCb = new AsyncCallback (OnAccept);
+		_listenSocket.BeginAccept (_acceptCb, null);
 
 		while (true) // Just sleep until we're aborted.
 			Thread.Sleep (1000000);
@@ -121,10 +121,10 @@ class SocketPolicyServer {
 		Console.WriteLine("incoming connection");
 		Socket accepted = null;
 		try {
-			accepted = listen_socket.EndAccept (ar);
+			accepted = _listenSocket.EndAccept (ar);
 		} catch {
 		} finally {
-			listen_socket.BeginAccept (accept_cb, null);
+			_listenSocket.BeginAccept (_acceptCb, null);
 		}
 
 		if (accepted == null)
@@ -145,20 +145,20 @@ class SocketPolicyServer {
 
 			// compare incoming data with expected request
 			for (int i=0; i < r.Length; i++) {
-				if (r.Buffer [i] != request [i]) {
+				if (r.Buffer [i] != _request [i]) {
 					// invalid request, close socket
 					socket.Close ();
 					return;
 				}
 			}
 
-			if (r.Length == request.Length) {
+			if (r.Length == _request.Length) {
 				Console.WriteLine("got policy request, sending response");
 				// request complete, send policy
-				socket.BeginSend (policy, 0, policy.Length, SocketFlags.None, new AsyncCallback (OnSend), socket);
+				socket.BeginSend (_policy, 0, _policy.Length, SocketFlags.None, new AsyncCallback (OnSend), socket);
 			} else {
 				// continue reading from socket
-				socket.BeginReceive (r.Buffer, r.Length, request.Length - r.Length, SocketFlags.None, 
+				socket.BeginReceive (r.Buffer, r.Length, _request.Length - r.Length, SocketFlags.None, 
 					new AsyncCallback (OnReceive), ar.AsyncState);
 			}
 		} catch {
@@ -181,8 +181,8 @@ class SocketPolicyServer {
 
 	public void Stop ()
 	{
-		runner.Abort ();
-		listen_socket.Close ();
+		_runner.Abort ();
+		_listenSocket.Close ();
 		Console.WriteLine("");
 		Console.WriteLine("  Policy service stopped.");
 	}

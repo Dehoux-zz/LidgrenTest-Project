@@ -6,7 +6,6 @@ using UnityEngine;
 
 public enum PackageTypes
 {
-    Connect,
     Disconnect,
     RemovePlayer,
     Message,
@@ -33,7 +32,9 @@ public sealed class ServerConnection
     public static string HostIp;
     public static int HostPort;
     public static string ConnectionValue;
-    
+
+    public static int TestCounter = 0;
+
     /// <summary>
     /// Getter and creator of the ServerConnecton class.
     /// </summary>
@@ -102,89 +103,104 @@ public sealed class ServerConnection
 
     public static void CheckIncomingMessage()
     {
-        NetIncomingMessage incomingMessage;
-
         if (Client.Status == NetPeerStatus.Running)
         {
+
+            NetIncomingMessage incomingMessage;
             if ((incomingMessage = Client.ReadMessage()) != null)
             {
-                if (incomingMessage.MessageType == NetIncomingMessageType.Data)
+                Debug.Log(incomingMessage.MessageType);
+                switch (incomingMessage.MessageType)
                 {
-                    switch ((PackageTypes)incomingMessage.ReadByte())
-                    {
-                        case PackageTypes.Message:
+                    case NetIncomingMessageType.StatusChanged:
+                        {
+                            switch ((NetConnectionStatus)incomingMessage.ReadByte())
                             {
-                                NetworkManager.Instance.WriteConsoleMessage(incomingMessage.ReadString());
-                            }
-                            break;
-                        case PackageTypes.AssignId:
-                            {
-                                ClientId = incomingMessage.ReadInt32();
-                            }
-                            break;
-                        case PackageTypes.AddPlayer:
-                            {
-                                NetworkManager.Instance.AddPlayer(incomingMessage);
-                                lastSec = Time.time;
-                            }
-                            break;
-                        case PackageTypes.PlayerMovement:
-                            {
-                                int playerId = incomingMessage.ReadInt16();
-                                Player player = NetworkManager.Instance.FindPlayer(playerId);
-                                player.NetIncomingMessageMovePlayer(incomingMessage);
-                            }
-                            break;
-                        case PackageTypes.PlayerJump:
-                            {
-                                int playerId = incomingMessage.ReadInt16();
-                                Player player = NetworkManager.Instance.FindPlayer(playerId);
-                                player.NetIncomingMessageJumpPlayer(incomingMessage);
-                            }
-                            break;
-                        case PackageTypes.Beat:
-                            {
-                                Player localPlayer = NetworkManager.Instance.GetLocalPlayer();
+                                //When connected to the server
+                                case NetConnectionStatus.Connected:
+                                    {
+                                        DebugConsole.Log("yey conected: " + TestCounter);
 
-                                NetOutgoingMessage outgoingMessage = CreateNetOutgoingMessage();
-                                outgoingMessage.Write((byte)PackageTypes.Beat);
-                                outgoingMessage.Write(incomingMessage.ReadInt16());
-                                if (localPlayer != null)
-                                {
-                                    outgoingMessage.Write(localPlayer.transform.position);
-                                }
-                                else
-                                {
-                                    outgoingMessage.Write(Vector2.zero);
-                                }
-                                Client.SendMessage(outgoingMessage, NetDeliveryMethod.ReliableOrdered, 4);
-                                Roundtriptime = incomingMessage.ReadFloat();
+                                    }
+                                    break;
+                                //When disconnected from the server
+                                case NetConnectionStatus.Disconnected:
+                                    {
+                                        string reason = incomingMessage.ReadString();
+                                        if (string.IsNullOrEmpty(reason))
+                                            NetworkManager.Instance.WriteConsoleMessage("Disconnected");
+                                        else
+                                            NetworkManager.Instance.WriteConsoleMessage("Disconnected, Reason: " + reason);
+                                    }
+                                    break;
                             }
-                            break;
-                    }
+                        }
+                        break;
 
 
+                    case NetIncomingMessageType.Data:
+                        {
+                            TestCounter++;
+                            switch ((PackageTypes)incomingMessage.ReadByte())
+                            {
+                                case PackageTypes.Message:
+                                    {
+                                        NetworkManager.Instance.WriteConsoleMessage(incomingMessage.ReadString());
+                                    }
+                                    break;
+                                case PackageTypes.AssignId:
+                                    {
+                                        ClientId = incomingMessage.ReadInt32();
+                                    }
+                                    break;
+                                case PackageTypes.AddPlayer:
+                                    {
+                                        NetworkManager.Instance.AddPlayer(incomingMessage);
+                                        lastSec = Time.time;
+                                    }
+                                    break;
+                                case PackageTypes.PlayerMovement:
+                                    {
+                                        int playerId = incomingMessage.ReadInt16();
+                                        Player player = NetworkManager.Instance.FindPlayer(playerId);
+                                        player.NetIncomingMessageMovePlayer(incomingMessage);
+                                    }
+                                    break;
+                                case PackageTypes.PlayerJump:
+                                    {
+                                        int playerId = incomingMessage.ReadInt16();
+                                        Player player = NetworkManager.Instance.FindPlayer(playerId);
+                                        player.NetIncomingMessageJumpPlayer(incomingMessage);
+                                    }
+                                    break;
+                                case PackageTypes.Beat:
+                                    {
+                                        Player localPlayer = NetworkManager.Instance.GetLocalPlayer();
+
+                                        NetOutgoingMessage outgoingMessage = CreateNetOutgoingMessage();
+                                        outgoingMessage.Write((byte)PackageTypes.Beat);
+                                        outgoingMessage.Write(incomingMessage.ReadInt16());
+                                        if (localPlayer != null)
+                                        {
+                                            outgoingMessage.Write(localPlayer.transform.position);
+                                        }
+                                        else
+                                        {
+                                            outgoingMessage.Write(Vector2.zero);
+                                        }
+                                        Client.SendMessage(outgoingMessage, NetDeliveryMethod.ReliableOrdered, 4);
+                                        Roundtriptime = incomingMessage.ReadFloat();
+                                    }
+                                    break;
+                            }
+                        }
+                        break;
+                    case NetIncomingMessageType.WarningMessage:
+                        {
+                            DebugConsole.Log(incomingMessage.ReadString());
+                        }
+                        break;
                 }
-                if (incomingMessage.MessageType == NetIncomingMessageType.StatusChanged)
-                {
-                    switch ((NetConnectionStatus)incomingMessage.ReadByte())
-                    {
-                        //When connected to the server
-                        case NetConnectionStatus.Connected:
-                            break;
-                        //When disconnected from the server
-                        case NetConnectionStatus.Disconnected:
-                            {
-                                string reason = incomingMessage.ReadString();
-                                if (string.IsNullOrEmpty(reason))
-                                    NetworkManager.Instance.WriteConsoleMessage("Disconnected");
-                                else
-                                    NetworkManager.Instance.WriteConsoleMessage("Disconnected, Reason: " + reason);
-                            }
-                            break;
-                    }
-                }
-
             }
         }
 
