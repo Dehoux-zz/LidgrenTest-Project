@@ -15,7 +15,9 @@ public enum PackageTypes
     AddPlayer,
     Beat,
     KeepAlive,
-    PlayerJump
+    PlayerJump,
+    AddRoom,
+    EnterRoom
 }
 
 public sealed class ServerConnection
@@ -151,6 +153,12 @@ public sealed class ServerConnection
                                 case PackageTypes.AssignId:
                                     {
                                         ClientId = incomingMessage.ReadInt32();
+                                        NetworkManager.Instance.LocalPlayerId = ClientId;
+                                    }
+                                    break;
+                                case PackageTypes.AddRoom:
+                                    {
+                                        NetworkManager.Instance.AddRoomToLobby(incomingMessage);
                                     }
                                     break;
                                 case PackageTypes.AddPlayer:
@@ -162,20 +170,20 @@ public sealed class ServerConnection
                                 case PackageTypes.PlayerMovement:
                                     {
                                         int playerId = incomingMessage.ReadInt16();
-                                        Player player = NetworkManager.Instance.FindPlayer(playerId);
+                                        Player player = NetworkManager.Instance.CurrentRoom.FindPlayer(playerId);
                                         player.NetIncomingMessageMovePlayer(incomingMessage);
                                     }
                                     break;
                                 case PackageTypes.PlayerJump:
                                     {
                                         int playerId = incomingMessage.ReadInt16();
-                                        Player player = NetworkManager.Instance.FindPlayer(playerId);
+                                        Player player = NetworkManager.Instance.CurrentRoom.FindPlayer(playerId);
                                         player.NetIncomingMessageJumpPlayer(incomingMessage);
                                     }
                                     break;
                                 case PackageTypes.Beat:
                                     {
-                                        Player localPlayer = NetworkManager.Instance.GetLocalPlayer();
+                                        Player localPlayer = NetworkManager.Instance.CurrentRoom.GetLocalPlayer();
 
                                         NetOutgoingMessage outgoingMessage = CreateNetOutgoingMessage();
                                         outgoingMessage.Write((byte)PackageTypes.Beat);

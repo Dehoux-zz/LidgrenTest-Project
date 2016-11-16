@@ -1,15 +1,17 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System.Security.Policy;
 using Lidgren.Network;
 
 public sealed class NetworkManager : MonoBehaviour
 {
-    public GameObject PlayerPrefab;
-    public Player localPlayer;
     private static volatile NetworkManager _instance;
     private static object syncRoot = new Object();
-    private static GameManager gameManager;
+
+    private Lobby lobby = new Lobby();
+    public Room CurrentRoom;
+    public int LocalPlayerId;
     private string hostIp;
     private List<Player> activePlayers;
     private ServerConnection serverConnection;
@@ -55,24 +57,24 @@ public sealed class NetworkManager : MonoBehaviour
     {
         ServerConnection.CheckIncomingMessage();
 
-        if (Input.GetKeyDown(KeyCode.E))
-        {
-            GameObject newPlayerGameObject = (GameObject)Instantiate(PlayerPrefab, new Vector2(2,4), Quaternion.identity);
-            Player newPlayer = newPlayerGameObject.GetComponent<Player>();
-            newPlayer.Id = 3;
-            newPlayer.name = "wow";
-            newPlayerGameObject.name = newPlayer.Id + " - " + newPlayer.name;
-            activePlayers.Add(newPlayer);
-        }
+        //if (Input.GetKeyDown(KeyCode.E))
+        //{
+        //    GameObject newPlayerGameObject = (GameObject)Instantiate(PlayerPrefab, new Vector2(2,4), Quaternion.identity);
+        //    Player newPlayer = newPlayerGameObject.GetComponent<Player>();
+        //    newPlayer.Id = 3;
+        //    newPlayer.name = "wow";
+        //    newPlayerGameObject.name = newPlayer.Id + " - " + newPlayer.name;
+        //    activePlayers.Add(newPlayer);
+        //}
 
-        if (Input.GetKeyDown(KeyCode.R))
-        {
-            DebugConsole.Log("Sending message to server");
-            NetOutgoingMessage outg = ServerConnection.CreateNetOutgoingMessage();
-            outg.Write((byte)PackageTypes.Message);
-            outg.Write("weoa man!");
-            ServerConnection.SendNetOutgoingMessage(outg, NetDeliveryMethod.ReliableOrdered, 2);
-        }
+        //if (Input.GetKeyDown(KeyCode.R))
+        //{
+        //    DebugConsole.Log("Sending message to server");
+        //    NetOutgoingMessage outg = ServerConnection.CreateNetOutgoingMessage();
+        //    outg.Write((byte)PackageTypes.Message);
+        //    outg.Write("weoa man!");
+        //    ServerConnection.SendNetOutgoingMessage(outg, NetDeliveryMethod.ReliableOrdered, 2);
+        //}
     }
 
     void Shutdown()
@@ -89,28 +91,47 @@ public sealed class NetworkManager : MonoBehaviour
 
     public void AddPlayer(NetIncomingMessage netIncomingMessage)
     {
-        GameObject newPlayerGameObject = (GameObject)Instantiate(PlayerPrefab, new Vector2(0,0), Quaternion.identity);
-        Player newPlayer = newPlayerGameObject.GetComponent<Player>();
-        newPlayer.Id = netIncomingMessage.ReadInt32();
-        newPlayer.name = netIncomingMessage.ReadString();
-        newPlayer.transform.position = netIncomingMessage.ReadVector2();
-        newPlayerGameObject.name = newPlayer.Id + " - " + newPlayer.name;
-        newPlayerGameObject.GetComponent<SpriteRenderer>().color = Color.red;
-        activePlayers.Add(newPlayer);
+        //GameObject newPlayerGameObject = (GameObject)Instantiate(PlayerPrefab, new Vector2(0, 0), Quaternion.identity);
+        //Player newPlayer = newPlayerGameObject.GetComponent<Player>();
+        //newPlayer.Id = netIncomingMessage.ReadInt32();
+        //newPlayer.name = netIncomingMessage.ReadString();
+        //newPlayer.transform.position = netIncomingMessage.ReadVector2();
+        //newPlayerGameObject.name = newPlayer.Id + " - " + newPlayer.name;
+        //newPlayerGameObject.GetComponent<SpriteRenderer>().color = Color.red;
+        //activePlayers.Add(newPlayer);
     }
 
-    public Player FindPlayer(int playerId)
+    public void AddRoomToLobby(NetIncomingMessage netIncomingMessage)
     {
-        return activePlayers.Find(x => x.Id == playerId);
+        Room newRoom = new Room
+        {
+            Id = netIncomingMessage.ReadInt32(),
+            Name = netIncomingMessage.ReadString()
+        };
+        lobby.AddRoom(newRoom);
     }
 
-    public Player GetLocalPlayer()
+    public Lobby GetLobby()
     {
-        return localPlayer;
+        return lobby;
     }
-    
+
+    public void JoinRoom(Room room)
+    {
+        room.LocalPlayerJoinsRoom(LocalPlayerId);
+        CurrentRoom = room;
+        
+    }
+
     public void WriteConsoleMessage(string message)
     {
         DebugConsole.Log(message);
+    }
+
+    public void EnterRoom(int roomId)
+    {
+        //Get room from lobby
+        //Create room and add player
+        //Network shizzel etc.
     }
 }

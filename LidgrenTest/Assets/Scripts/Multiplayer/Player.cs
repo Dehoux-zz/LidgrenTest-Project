@@ -233,6 +233,12 @@ public class Player : MonoBehaviour
         ServerConnection.SendNetOutgoingMessage(netOutgoingMessage, NetDeliveryMethod.ReliableOrdered, 11);
     }
 
+
+    public void NetOutgoingMessagePlayerJoinedRoom()
+    {
+
+    }
+
     public void NetIncomingMessageMovePlayer(NetIncomingMessage netIncomingMessage)
     {
         networkPlayerPosition = netIncomingMessage.ReadVector2();
@@ -244,6 +250,11 @@ public class Player : MonoBehaviour
     {
         spriteRenderer.color = Color.green;
         grounded = false;
+    }
+
+    public void NetIncomingMessagePlayerJoinedRoom()
+    {
+        
     }
 
     void OnCollisionEnter(Collision col)

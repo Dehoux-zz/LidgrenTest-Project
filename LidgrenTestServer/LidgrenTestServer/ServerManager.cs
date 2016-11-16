@@ -11,8 +11,10 @@ namespace LidgrenTestServer
     {
         public NetServer Server { get; private set; }
         private List<Player> _activePlayers;
+        private List<ServerRoom> _serverRooms;
         private NetPeerConfiguration _config;
-        private int _idCount;
+        private int _playerIdCount;
+        private int _roomIdCount;
         private string _approvalMessage;
         private Thread _t1;
         private int _beatnum;
@@ -63,11 +65,14 @@ namespace LidgrenTestServer
         public void StartServer()
         {
             _activePlayers = new List<Player>();
+            _serverRooms = new List<ServerRoom>();
 
             Server = new NetServer(_config);
             Server.RegisterReceivedCallback(ServerMessageHandler.Register);
             Server.Start();
             Console.WriteLine("Server Started");
+
+            _serverRooms.Add(new ServerRoom(2));
 
             _t1 = new Thread(RunGameLoop) { Name = "Game Loop Thread" };
             _t1.Start();
@@ -143,10 +148,13 @@ namespace LidgrenTestServer
                 Console.WriteLine("Incoming message ConnectionApproval: Approved: " + incomingMessage.SenderConnection);
                 incomingMessage.SenderConnection.Approve();
 
-                if (_activePlayers.Count == 0)
-                    _idCount = 0;
+                if (_playerIdCount == 0)
+                {
+                    _playerIdCount = 0;
+                    _roomIdCount = 0;
+                }
 
-                AddPlayerToGame(incomingMessage);
+                AddPlayerToLobby(incomingMessage);
             }
             else
             {
@@ -177,16 +185,23 @@ namespace LidgrenTestServer
             return _activePlayers.Find(p => p.Connection == connection);
         }
 
+        public ServerRoom SearchServerRoom(int roomId)
+        {
+            return _serverRooms.Find(r => r.Id == roomId);
+        }
+
         #endregion
 
         #region ManagePlayer
 
-        public void AddPlayerToGame(NetIncomingMessage incomingMessage)
+        public void AddPlayerToLobby(NetIncomingMessage incomingMessage)
         {
-            Console.WriteLine("Assigning new player the name of: Player " + ++_idCount);
-            Player newPlayer = new Player(_idCount, incomingMessage.SenderConnection, "Player " + _idCount, _beatnum);
+            Console.WriteLine("Assigning new player the name of: Player " + ++_playerIdCount);
+            Player newPlayer = new Player(_playerIdCount, incomingMessage.SenderConnection, "Player " + _playerIdCount, _beatnum);
 
             _activePlayers.Add(newPlayer);
+
+            //Wait before sending back, client may be slower! <-- Tricky code
             Thread.Sleep(2000);
 
             _outgoingMessage = Server.CreateMessage();
@@ -199,43 +214,86 @@ namespace LidgrenTestServer
             // Assign Id number to client
             _outgoingMessage = Server.CreateMessage();
             _outgoingMessage.Write((byte)PacketTypes.AssignId);
-            _outgoingMessage.Write(_idCount);
+            _outgoingMessage.Write(_playerIdCount);
             Server.SendMessage(_outgoingMessage, incomingMessage.SenderConnection, NetDeliveryMethod.ReliableOrdered, 1);
 
-            newPlayer.SentPlayerToOthers(incomingMessage);
-
-            //Send all otherPlayers to new player excl. himself
-            foreach (Player otherPlayer in _activePlayers.Where(otherPlayer => otherPlayer.Id != newPlayer.Id))
+            foreach (ServerRoom serverRoom in _serverRooms)
             {
                 _outgoingMessage = Server.CreateMessage();
-                _outgoingMessage.Write((byte)PacketTypes.AddPlayer);
-                _outgoingMessage.Write(otherPlayer.Id);
-                _outgoingMessage.Write(otherPlayer.Name);
-                _outgoingMessage.Write(otherPlayer.Position);
-                Server.SendMessage(_outgoingMessage, incomingMessage.SenderConnection, NetDeliveryMethod.ReliableOrdered, 7);
+                _outgoingMessage.Write((byte)PacketTypes.AddRoom);
+                _outgoingMessage.Write(serverRoom.Id);
+                _outgoingMessage.Write(serverRoom.Name);
+                Server.SendMessage(_outgoingMessage, incomingMessage.SenderConnection, NetDeliveryMethod.ReliableOrdered, 2);
             }
-
-            //Send the current playercount to current player (yes sending all isn't enough for new player)
-            _outgoingMessage = Server.CreateMessage();
-            _outgoingMessage.Write((byte)PacketTypes.PlayerCount);
-            _outgoingMessage.Write((Int16)_activePlayers.Count);
-            Server.SendMessage(_outgoingMessage, incomingMessage.SenderConnection, NetDeliveryMethod.ReliableOrdered, 6);
-
-            //Send the current playercount to all but current player
-            _outgoingMessage = Server.CreateMessage();
-            _outgoingMessage.Write((byte)PacketTypes.PlayerCount);
-            _outgoingMessage.Write((Int16)_activePlayers.Count);
-            Server.SendToAll(_outgoingMessage, incomingMessage.SenderConnection, NetDeliveryMethod.ReliableOrdered, 6);
-
-            //for (int i = 0; i < 100; i++)
-            //{
-            //    Console.WriteLine("Sending message");
-            //    _outgoingMessage = Server.CreateMessage();
-            //    _outgoingMessage.Write((byte)PacketTypes.Message);
-            //    _outgoingMessage.Write("You are now connected to Lidgren TestServer.");
-            //    Server.SendMessage(_outgoingMessage, incomingMessage.SenderConnection, NetDeliveryMethod.ReliableOrdered, 0);
-            //}
         }
+
+        public void SendPlayerToPlayer(Player sendPlayer, Player toPlayer)
+        {
+            _outgoingMessage = Server.CreateMessage();
+            _outgoingMessage.Write((byte)PacketTypes.AddPlayer);
+            _outgoingMessage.Write(sendPlayer.Id);
+            _outgoingMessage.Write(sendPlayer.Name);
+            _outgoingMessage.Write(sendPlayer.Position);
+            Server.SendMessage(_outgoingMessage, toPlayer.Connection, NetDeliveryMethod.ReliableOrdered, 7);
+        }
+
+        //public void AddPlayerToGame(NetIncomingMessage incomingMessage)
+        //{
+        //    Console.WriteLine("Assigning new player the name of: Player " + ++_playerIdCount);
+        //    Player newPlayer = new Player(_playerIdCount, incomingMessage.SenderConnection, "Player " + _playerIdCount, _beatnum);
+
+        //    _activePlayers.Add(newPlayer);
+
+        //    //Wait before sending back, client may be slower! <-- Tricky code
+        //    Thread.Sleep(2000);
+
+        //    _outgoingMessage = Server.CreateMessage();
+        //    _outgoingMessage.Write((byte)PacketTypes.Message);
+        //    _outgoingMessage.Write("You are now connected to Lidgren TestServer.");
+        //    Server.SendMessage(_outgoingMessage, incomingMessage.SenderConnection, NetDeliveryMethod.ReliableOrdered, 0);
+
+        //    Console.WriteLine("Sending to: " + incomingMessage.SenderConnection);
+
+        //    // Assign Id number to client
+        //    _outgoingMessage = Server.CreateMessage();
+        //    _outgoingMessage.Write((byte)PacketTypes.AssignId);
+        //    _outgoingMessage.Write(_playerIdCount);
+        //    Server.SendMessage(_outgoingMessage, incomingMessage.SenderConnection, NetDeliveryMethod.ReliableOrdered, 1);
+
+        //    newPlayer.SentPlayerToOthers(incomingMessage);
+
+        //    //Send all otherPlayers to new player excl. himself
+        //    foreach (Player otherPlayer in _activePlayers.Where(otherPlayer => otherPlayer.Id != newPlayer.Id))
+        //    {
+        //        _outgoingMessage = Server.CreateMessage();
+        //        _outgoingMessage.Write((byte)PacketTypes.AddPlayer);
+        //        _outgoingMessage.Write(otherPlayer.Id);
+        //        _outgoingMessage.Write(otherPlayer.Name);
+        //        _outgoingMessage.Write(otherPlayer.Position);
+        //        Server.SendMessage(_outgoingMessage, incomingMessage.SenderConnection, NetDeliveryMethod.ReliableOrdered, 7);
+        //    }
+
+        //    //Send the current playercount to current player (yes sending all isn't enough for new player)
+        //    _outgoingMessage = Server.CreateMessage();
+        //    _outgoingMessage.Write((byte)PacketTypes.PlayerCount);
+        //    _outgoingMessage.Write((Int16)_activePlayers.Count);
+        //    Server.SendMessage(_outgoingMessage, incomingMessage.SenderConnection, NetDeliveryMethod.ReliableOrdered, 6);
+
+        //    //Send the current playercount to all but current player
+        //    _outgoingMessage = Server.CreateMessage();
+        //    _outgoingMessage.Write((byte)PacketTypes.PlayerCount);
+        //    _outgoingMessage.Write((Int16)_activePlayers.Count);
+        //    Server.SendToAll(_outgoingMessage, incomingMessage.SenderConnection, NetDeliveryMethod.ReliableOrdered, 6);
+
+        //    //for (int i = 0; i < 100; i++)
+        //    //{
+        //    //    Console.WriteLine("Sending message");
+        //    //    _outgoingMessage = Server.CreateMessage();
+        //    //    _outgoingMessage.Write((byte)PacketTypes.Message);
+        //    //    _outgoingMessage.Write("You are now connected to Lidgren TestServer.");
+        //    //    Server.SendMessage(_outgoingMessage, incomingMessage.SenderConnection, NetDeliveryMethod.ReliableOrdered, 0);
+        //    //}
+        //}
 
         #endregion
 

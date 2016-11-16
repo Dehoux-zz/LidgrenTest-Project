@@ -66,6 +66,11 @@ namespace LidgrenTestServer
                                     player.HandlePlayerJump(incomingMessage);
                                 }
                                 break;
+                            case PacketTypes.EnterRoom:
+                                {
+                                    player.JoinServerRoom(incomingMessage);
+                                }
+                                break;
                             #endregion
 
 
@@ -107,6 +112,8 @@ namespace LidgrenTestServer
         AddPlayer,
         Beat,
         KeepAlive,
-        PlayerJump
+        PlayerJump,
+        AddRoom,
+        EnterRoom
     }
 }

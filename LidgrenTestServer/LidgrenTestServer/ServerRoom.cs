@@ -8,13 +8,28 @@ namespace LidgrenTestServer
 {
     public class ServerRoom
     {
-        public string ServerRoomId { get; set; }
+        public int Id { get; set; }
+        public string Name { get; set; }
         public List<Player> Players { get; set; }
+        private ServerManager _serverManager;
 
-        public ServerRoom(string serverRoomId)
+        public ServerRoom(int id)
         {
-            ServerRoomId = serverRoomId;
+            Id = id;
+            Name = "Lidgren Room: " + id;
             Players = new List<Player>();
+            _serverManager = ServerManager.Instance;
+        }
+
+        public void AddNewPlayer(Player newPlayer)
+        {
+            Players.Add(newPlayer);
+
+            //Send all otherPlayers to new player excl. himself
+            foreach (Player otherPlayer in Players.Where(otherPlayer => otherPlayer.Id != newPlayer.Id))
+            {
+                _serverManager.SendPlayerToPlayer(newPlayer, otherPlayer);
+            }
         }
     }
 }

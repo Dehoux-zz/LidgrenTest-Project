@@ -26,6 +26,7 @@ namespace LidgrenTestServer
         public int LastBeat;
         public double KeepAlive = 0, LastKeepAlive = 0;
         public bool Grounded;
+        public ServerRoom joinedRoom;
 
         private NetOutgoingMessage _outgoingMessage;
         private ServerManager serverManager = ServerManager.Instance;
@@ -49,23 +50,37 @@ namespace LidgrenTestServer
             Grounded = incomingMessage.ReadBoolean();
 
             Console.WriteLine("Id: " + Id + " Position: " + Position + " Velocity: " + Velocity + " Grounded: " + Grounded);
-
-            _outgoingMessage = serverManager.Server.CreateMessage();
-            _outgoingMessage.Write((byte)PacketTypes.PlayerMovement);
-            _outgoingMessage.Write((Int16)Id);
-            _outgoingMessage.Write(Position);
-            _outgoingMessage.Write(Velocity);
-            _outgoingMessage.Write(Grounded);
-            //outgoingMessage.Write(player.Connection.AverageRoundtripTime / 2f);
-            serverManager.Server.SendToAll(_outgoingMessage, incomingMessage.SenderConnection, NetDeliveryMethod.UnreliableSequenced, 10);
+            foreach (Player player in joinedRoom.Players)
+            {
+                _outgoingMessage = serverManager.Server.CreateMessage();
+                _outgoingMessage.Write((byte) PacketTypes.PlayerMovement);
+                _outgoingMessage.Write((Int16) Id);
+                _outgoingMessage.Write(Position);
+                _outgoingMessage.Write(Velocity);
+                _outgoingMessage.Write(Grounded);
+                //outgoingMessage.Write(player.Connection.AverageRoundtripTime / 2f);
+                serverManager.Server.SendMessage(_outgoingMessage, player.Connection, NetDeliveryMethod.UnreliableSequenced, 10);
+            }
         }
 
         public void HandlePlayerJump(NetIncomingMessage incomingMessage)
         {
-            _outgoingMessage = serverManager.Server.CreateMessage();
-            _outgoingMessage.Write((byte)PacketTypes.PlayerJump);
-            _outgoingMessage.Write((Int16)Id);
-            serverManager.Server.SendToAll(_outgoingMessage, incomingMessage.SenderConnection, NetDeliveryMethod.ReliableUnordered, 11);
+            foreach (Player player in joinedRoom.Players)
+            {
+                _outgoingMessage = serverManager.Server.CreateMessage();
+                _outgoingMessage.Write((byte) PacketTypes.PlayerJump);
+                _outgoingMessage.Write((Int16) Id);
+                serverManager.Server.SendMessage(_outgoingMessage, player.Connection, NetDeliveryMethod.ReliableUnordered, 11);
+
+            }
+        }
+
+        public void JoinServerRoom(NetIncomingMessage incomingMessage)
+        {
+            ServerRoom serverRoom = serverManager.SearchServerRoom(incomingMessage.ReadInt32());
+            joinedRoom = serverRoom;
+            serverRoom.AddNewPlayer(this);
+            SentPlayerToOthers(incomingMessage);
         }
 
         /// <summary>
@@ -75,12 +90,16 @@ namespace LidgrenTestServer
         public void SentPlayerToOthers(NetIncomingMessage incomingMessage)
         {
             Console.WriteLine("Send to all player");
-            _outgoingMessage = serverManager.Server.CreateMessage();
-            _outgoingMessage.Write((byte)PacketTypes.AddPlayer);
-            _outgoingMessage.Write(Id);
-            _outgoingMessage.Write(Name);
-            _outgoingMessage.Write(Position);
-            serverManager.Server.SendToAll(_outgoingMessage, incomingMessage.SenderConnection, NetDeliveryMethod.ReliableOrdered, 7);
+
+            foreach (Player player in joinedRoom.Players)
+            {
+                _outgoingMessage = serverManager.Server.CreateMessage();
+                _outgoingMessage.Write((byte)PacketTypes.AddPlayer);
+                _outgoingMessage.Write(Id);
+                _outgoingMessage.Write(Name);
+                _outgoingMessage.Write(Position);
+                serverManager.Server.SendMessage(_outgoingMessage, player.Connection, NetDeliveryMethod.ReliableOrdered, 7);
+            }
         }
     }
 }
