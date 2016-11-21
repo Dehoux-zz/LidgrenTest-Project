@@ -21,8 +21,11 @@ namespace LidgrenTestServer
                         break;
                     case NetIncomingMessageType.Data:
 
-                        Player player = _serverManager.SearchPlayer(incomingMessage.SenderConnection);
-                        if (player == null || incomingMessage.LengthBytes < 1)
+
+
+
+                        Client client = _serverManager.SearchClient(incomingMessage.SenderConnection);
+                        if (client == null || incomingMessage.LengthBytes < 1)
                             break;
                         switch ((PacketTypes)incomingMessage.ReadByte())
                         {
@@ -30,7 +33,7 @@ namespace LidgrenTestServer
                             //Manage disconnect from client, remove player from ServerManager
                             case PacketTypes.Disconnect:
                                 {
-                                    _serverManager.ManageDisonnectionOfPlayer(player);
+                                    _serverManager.ManageDisonnectionOfClient(client);
                                 }
                                 break;
                             #endregion
@@ -41,34 +44,34 @@ namespace LidgrenTestServer
                             case PacketTypes.Beat:
                                 {
                                     if (incomingMessage.LengthBytes < 2) break;
-                                    player.LastBeat = incomingMessage.ReadInt16();
-                                    player.Position = incomingMessage.ReadVector2();
+                                    client.LastBeat = incomingMessage.ReadInt16();
+                                    client.AttachedPlayer.Position = incomingMessage.ReadVector2();
                                 }
                                 break;
 
                             //KeepAlive flag is raised, setting timestamp for further checks
                             case PacketTypes.KeepAlive:
                                 {
-                                    player.KeepAlive = NetTime.Now;
+                                    client.KeepAlive = NetTime.Now;
                                 }
                                 break;
 
                             //Handle player movement en send to all but the incommingmessage player
                             case PacketTypes.PlayerMovement:
                                 {
-                                    player.HandlePlayerMovement(incomingMessage);
+                                    client.HandlePlayerMovement(incomingMessage);
                                 }
                                 break;
 
                             //Handle player jump en send to all but the incommingmessage player
                             case PacketTypes.PlayerJump:
                                 {
-                                    player.HandlePlayerJump(incomingMessage);
+                                    client.HandlePlayerJump(incomingMessage);
                                 }
                                 break;
                             case PacketTypes.EnterRoom:
                                 {
-                                    player.JoinServerRoom(incomingMessage);
+                                    client.JoinServerRoom(incomingMessage);
                                 }
                                 break;
                             #endregion

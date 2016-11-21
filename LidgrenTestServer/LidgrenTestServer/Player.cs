@@ -16,29 +16,17 @@ namespace LidgrenTestServer
     /// Connection (ip+port)
     /// 
     /// </summary>
-    public class Player
+    public class Player : Client
     {
-        public int Id { get; }
         public string Name { get; }
-        public NetConnection Connection { get; }
         public Vector2 Position;
         public Vector2 Velocity;
-        public int LastBeat;
-        public double KeepAlive = 0, LastKeepAlive = 0;
         public bool Grounded;
-        public ServerRoom joinedRoom;
 
-        private NetOutgoingMessage _outgoingMessage;
-        private ServerManager serverManager = ServerManager.Instance;
-
-
-        public Player(int id, NetConnection connection, string name, int curBeat)
+        public Player(int id, NetConnection connection, int curBeat) : base (id, connection, curBeat)
         {
-            Id = id;
-            Connection = connection;
-            Name = name;
+            Name = "Player" + Id;
             Position = new Vector2();
-            LastBeat = curBeat;
             Velocity = Vector2.zero;
             Grounded = false;
         }
@@ -49,28 +37,28 @@ namespace LidgrenTestServer
             Velocity = incomingMessage.ReadVector2();
             Grounded = incomingMessage.ReadBoolean();
 
-            Console.WriteLine("Id: " + Id + " Position: " + Position + " Velocity: " + Velocity + " Grounded: " + Grounded);
-            foreach (Player player in joinedRoom.Players)
+            Console.WriteLine("Name: " + Name + " Position: " + Position + " Velocity: " + Velocity + " Grounded: " + Grounded);
+            foreach (Client client in joinedRoom.Players)
             {
                 _outgoingMessage = serverManager.Server.CreateMessage();
-                _outgoingMessage.Write((byte) PacketTypes.PlayerMovement);
-                _outgoingMessage.Write((Int16) Id);
+                _outgoingMessage.Write((byte)PacketTypes.PlayerMovement);
+                _outgoingMessage.Write((Int16)Id);
                 _outgoingMessage.Write(Position);
                 _outgoingMessage.Write(Velocity);
                 _outgoingMessage.Write(Grounded);
                 //outgoingMessage.Write(player.Connection.AverageRoundtripTime / 2f);
-                serverManager.Server.SendMessage(_outgoingMessage, player.Connection, NetDeliveryMethod.UnreliableSequenced, 10);
+                serverManager.Server.SendMessage(_outgoingMessage, client.Connection, NetDeliveryMethod.UnreliableSequenced, 10);
             }
         }
 
         public void HandlePlayerJump(NetIncomingMessage incomingMessage)
         {
-            foreach (Player player in joinedRoom.Players)
+            foreach (Client client in joinedRoom.Players)
             {
                 _outgoingMessage = serverManager.Server.CreateMessage();
-                _outgoingMessage.Write((byte) PacketTypes.PlayerJump);
-                _outgoingMessage.Write((Int16) Id);
-                serverManager.Server.SendMessage(_outgoingMessage, player.Connection, NetDeliveryMethod.ReliableUnordered, 11);
+                _outgoingMessage.Write((byte)PacketTypes.PlayerJump);
+                _outgoingMessage.Write((Int16)Id);
+                serverManager.Server.SendMessage(_outgoingMessage, client.Connection, NetDeliveryMethod.ReliableUnordered, 11);
 
             }
         }
@@ -91,14 +79,14 @@ namespace LidgrenTestServer
         {
             Console.WriteLine("Send to all player");
 
-            foreach (Player player in joinedRoom.Players)
+            foreach (Client client in joinedRoom.Players)
             {
                 _outgoingMessage = serverManager.Server.CreateMessage();
                 _outgoingMessage.Write((byte)PacketTypes.AddPlayer);
                 _outgoingMessage.Write(Id);
                 _outgoingMessage.Write(Name);
                 _outgoingMessage.Write(Position);
-                serverManager.Server.SendMessage(_outgoingMessage, player.Connection, NetDeliveryMethod.ReliableOrdered, 7);
+                serverManager.Server.SendMessage(_outgoingMessage, client.Connection, NetDeliveryMethod.ReliableOrdered, 7);
             }
         }
     }

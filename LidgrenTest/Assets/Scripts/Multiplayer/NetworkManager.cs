@@ -11,7 +11,7 @@ public sealed class NetworkManager : MonoBehaviour
 
     private Lobby lobby = new Lobby();
     public Room CurrentRoom;
-    public int LocalPlayerId;
+    public int MyClientId;
     private string hostIp;
     private List<Player> activePlayers;
     private ServerConnection serverConnection;
@@ -103,11 +103,10 @@ public sealed class NetworkManager : MonoBehaviour
 
     public void AddRoomToLobby(NetIncomingMessage netIncomingMessage)
     {
-        Room newRoom = new Room
-        {
-            Id = netIncomingMessage.ReadInt32(),
-            Name = netIncomingMessage.ReadString()
-        };
+        Room newRoom = ((GameObject) Instantiate(new GameObject("Room"), Vector3.zero, Quaternion.identity)).AddComponent<Room>();
+        newRoom.Id = netIncomingMessage.ReadInt32();
+        newRoom.Name = netIncomingMessage.ReadString();
+        
         lobby.AddRoom(newRoom);
     }
 
@@ -118,9 +117,8 @@ public sealed class NetworkManager : MonoBehaviour
 
     public void JoinRoom(Room room)
     {
-        room.LocalPlayerJoinsRoom(LocalPlayerId);
+        room.LocalPlayerJoinsRoom(MyClientId);
         CurrentRoom = room;
-        
     }
 
     public void WriteConsoleMessage(string message)

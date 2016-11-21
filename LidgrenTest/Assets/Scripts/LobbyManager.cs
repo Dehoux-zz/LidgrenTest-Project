@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 using System.Security.Policy;
 using UnityEngine.UI;
 
@@ -22,6 +23,11 @@ public class LobbyManager : MonoBehaviour {
 
     public void RefreshRooms()
     {
+        List<GameObject> children = new List<GameObject>();
+        foreach (Transform child in LobbyPanel.transform) children.Add(child.gameObject);
+        children.ForEach(child => Destroy(child));
+        roomPanelPosition = 30;
+
         Lobby lobby = _networkManager.GetLobby();
         foreach (Room room in lobby.GetRooms())
         {
@@ -33,7 +39,7 @@ public class LobbyManager : MonoBehaviour {
             newRoomGameObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, roomPanelPosition);
             roomPanelPosition -= 30;
 
-            newRoomGameObject.GetComponent<Button>().onClick.AddListener(() => { _networkManager.JoinRoom(room); });
+            newRoomGameObject.GetComponentInChildren<Button>().onClick.AddListener(() => { _networkManager.JoinRoom(room); });
         }
     }
 

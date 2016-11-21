@@ -10,25 +10,24 @@ namespace LidgrenTestServer
     {
         public int Id { get; set; }
         public string Name { get; set; }
-        public List<Player> Players { get; set; }
+        public List<Client> Players { get; set; }
         private ServerManager _serverManager;
 
         public ServerRoom(int id)
         {
             Id = id;
             Name = "Lidgren Room: " + id;
-            Players = new List<Player>();
+            Players = new List<Client>();
             _serverManager = ServerManager.Instance;
         }
 
-        public void AddNewPlayer(Player newPlayer)
+        public void AddNewPlayer(Client newClient)
         {
-            Players.Add(newPlayer);
-
+            Players.Add(newClient);
             //Send all otherPlayers to new player excl. himself
-            foreach (Player otherPlayer in Players.Where(otherPlayer => otherPlayer.Id != newPlayer.Id))
+            foreach (Client otherPlayer in Players.Where(otherPlayer => otherPlayer.Id != newClient.Id))
             {
-                _serverManager.SendPlayerToPlayer(newPlayer, otherPlayer);
+                _serverManager.SendPlayerToPlayer(newClient, otherPlayer);
             }
         }
     }

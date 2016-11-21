@@ -121,7 +121,7 @@ public sealed class ServerConnection
                                 //When connected to the server
                                 case NetConnectionStatus.Connected:
                                     {
-                                        DebugConsole.Log("yey conected: " + TestCounter);
+                                        DebugConsole.Log("yey connected: " + TestCounter);
 
                                     }
                                     break;
@@ -153,7 +153,7 @@ public sealed class ServerConnection
                                 case PackageTypes.AssignId:
                                     {
                                         ClientId = incomingMessage.ReadInt32();
-                                        NetworkManager.Instance.LocalPlayerId = ClientId;
+                                        NetworkManager.Instance.MyClientId = ClientId;
                                     }
                                     break;
                                 case PackageTypes.AddRoom:
@@ -183,19 +183,19 @@ public sealed class ServerConnection
                                     break;
                                 case PackageTypes.Beat:
                                     {
-                                        Player localPlayer = NetworkManager.Instance.CurrentRoom.GetLocalPlayer();
+                                        //Player localPlayer = NetworkManager.Instance.CurrentRoom.GetLocalPlayer();
 
                                         NetOutgoingMessage outgoingMessage = CreateNetOutgoingMessage();
                                         outgoingMessage.Write((byte)PackageTypes.Beat);
                                         outgoingMessage.Write(incomingMessage.ReadInt16());
-                                        if (localPlayer != null)
-                                        {
-                                            outgoingMessage.Write(localPlayer.transform.position);
-                                        }
-                                        else
-                                        {
+                                        //if (localPlayer != null)
+                                        //{
+                                        //    outgoingMessage.Write(localPlayer.transform.position);
+                                        //}
+                                        //else
+                                        //{
                                             outgoingMessage.Write(Vector2.zero);
-                                        }
+                                        //}
                                         Client.SendMessage(outgoingMessage, NetDeliveryMethod.ReliableOrdered, 4);
                                         Roundtriptime = incomingMessage.ReadFloat();
                                     }

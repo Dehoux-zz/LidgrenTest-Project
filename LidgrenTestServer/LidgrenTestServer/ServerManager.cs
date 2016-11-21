@@ -10,10 +10,10 @@ namespace LidgrenTestServer
     public class ServerManager
     {
         public NetServer Server { get; private set; }
-        private List<Player> _activePlayers;
+        private List<Client> _activeClients;
         private List<ServerRoom> _serverRooms;
         private NetPeerConfiguration _config;
-        private int _playerIdCount;
+        private int _clientIdCount;
         private int _roomIdCount;
         private string _approvalMessage;
         private Thread _t1;
@@ -64,7 +64,7 @@ namespace LidgrenTestServer
 
         public void StartServer()
         {
-            _activePlayers = new List<Player>();
+            _activeClients = new List<Client>();
             _serverRooms = new List<ServerRoom>();
 
             Server = new NetServer(_config);
@@ -102,17 +102,17 @@ namespace LidgrenTestServer
                 // Handle dropping players and long idle connections. Note Client must send a KeepAlive packet within 15s
                 if (NetTime.Now > _last15Sec + 15)
                 {
-                    foreach (Player player in _activePlayers)
+                    foreach (Client client in _activeClients)
                     {
                         //Console.WriteLine("KeepAlive Check "+player.Name+" (Id"+player.Id+") "+ player.Connection.Status+" RTT "+player.Connection.AverageRoundtripTime +" keepAlive "+player.keepAlive+" vs. lastKeepAlive "+player.lastKeepAlive);
-                        if (player.KeepAlive > player.LastKeepAlive)
-                            player.LastKeepAlive = NetTime.Now;
-                        else if (player.KeepAlive != player.LastKeepAlive)
+                        if (client.KeepAlive > client.LastKeepAlive)
+                            client.LastKeepAlive = NetTime.Now;
+                        else if (client.KeepAlive != client.LastKeepAlive)
                         {
-                            player.Connection.Deny(player.Name + " (Id" + player.Id + ") idle connection's keepAlive " + player.KeepAlive + " is < lastKeepAlive " + player.LastKeepAlive);
+                            client.Connection.Deny("Client ID: " + client.Id + " idle connection's keepAlive " + client.KeepAlive + " is < lastKeepAlive " + client.LastKeepAlive);
                         }
-                        else if (player.KeepAlive == player.LastKeepAlive)
-                            player.LastKeepAlive = NetTime.Now;
+                        else if (client.KeepAlive == client.LastKeepAlive)
+                            client.LastKeepAlive = NetTime.Now;
                     }
                     _last15Sec = NetTime.Now;
                 }
@@ -122,13 +122,13 @@ namespace LidgrenTestServer
                 {
                     //Send a beat to all users. Because the server doesn't really know if they disconnected unless we are sending packets to them.
                     //Beats go out every 2 seconds.
-                    foreach (Player player in _activePlayers)
+                    foreach (Client client in _activeClients)
                     {
                         NetOutgoingMessage outgoingMessage = Server.CreateMessage();
                         outgoingMessage.Write((byte)PacketTypes.Beat);
                         outgoingMessage.Write((Int16)_beatnum);
-                        outgoingMessage.Write((float)player.Connection.AverageRoundtripTime / 2f);
-                        Server.SendMessage(outgoingMessage, player.Connection, NetDeliveryMethod.ReliableOrdered, 4);
+                        outgoingMessage.Write((float)client.Connection.AverageRoundtripTime / 2f);
+                        Server.SendMessage(outgoingMessage, client.Connection, NetDeliveryMethod.ReliableOrdered, 4);
                     }
                     _beatnum++;
                     _lastBeat = DateTime.Now;
@@ -148,13 +148,13 @@ namespace LidgrenTestServer
                 Console.WriteLine("Incoming message ConnectionApproval: Approved: " + incomingMessage.SenderConnection);
                 incomingMessage.SenderConnection.Approve();
 
-                if (_playerIdCount == 0)
+                if (_clientIdCount == 0)
                 {
-                    _playerIdCount = 0;
+                    _clientIdCount = 0;
                     _roomIdCount = 0;
                 }
 
-                AddPlayerToLobby(incomingMessage);
+                AddClient(incomingMessage);
             }
             else
             {
@@ -163,26 +163,35 @@ namespace LidgrenTestServer
             }
         }
 
-        public void ManageDisonnectionOfPlayer(Player player)
+        public void ManageDisonnectionOfClient(Client client)
         {
-            Console.WriteLine(player.Name + " (Id" + player.Id + ") has disconnected, removing player object.");
+            Console.WriteLine("Client with client ID " + client.Id + " left the server, byebye.");
 
-            _outgoingMessage = Server.CreateMessage();
-            _outgoingMessage.Write((byte)PacketTypes.RemovePlayer);
-            _outgoingMessage.Write((Int16)player.Id);
-            Server.SendMessage(_outgoingMessage, Server.Connections, NetDeliveryMethod.ReliableOrdered, 1);
-
-            _activePlayers.Remove(player);
+            _activeClients.Remove(client);
 
             _outgoingMessage = Server.CreateMessage();
             _outgoingMessage.Write((byte)PacketTypes.PlayerCount);
-            _outgoingMessage.Write((Int16)_activePlayers.Count);
+            _outgoingMessage.Write((Int16)_activeClients.Count);
             Server.SendMessage(_outgoingMessage, Server.Connections, NetDeliveryMethod.ReliableOrdered, 6);
         }
 
-        public Player SearchPlayer(NetConnection connection)
+        //Console.WriteLine(player.Name + " (Id" + player.Id + ") has disconnected, removing player object.");
+
+        //    _outgoingMessage = Server.CreateMessage();
+        //    _outgoingMessage.Write((byte)PacketTypes.RemovePlayer);
+        //    _outgoingMessage.Write((Int16)player.Id);
+        //    Server.SendMessage(_outgoingMessage, Server.Connections, NetDeliveryMethod.ReliableOrdered, 1);
+
+        //    _activeClients.Remove(player);
+
+        //    _outgoingMessage = Server.CreateMessage();
+        //    _outgoingMessage.Write((byte)PacketTypes.PlayerCount);
+        //    _outgoingMessage.Write((Int16)_activeClients.Count);
+        //    Server.SendMessage(_outgoingMessage, Server.Connections, NetDeliveryMethod.ReliableOrdered, 6);
+
+        public Client SearchClient(NetConnection connection)
         {
-            return _activePlayers.Find(p => p.Connection == connection);
+            return _activeClients.Find(c => c.Connection == connection);
         }
 
         public ServerRoom SearchServerRoom(int roomId)
@@ -194,12 +203,12 @@ namespace LidgrenTestServer
 
         #region ManagePlayer
 
-        public void AddPlayerToLobby(NetIncomingMessage incomingMessage)
+        public void AddClient(NetIncomingMessage incomingMessage)
         {
-            Console.WriteLine("Assigning new player the name of: Player " + ++_playerIdCount);
-            Player newPlayer = new Player(_playerIdCount, incomingMessage.SenderConnection, "Player " + _playerIdCount, _beatnum);
+            Console.WriteLine("Assigning new player the name of: Player " + ++_clientIdCount);
+            Client newClient = new Client(_clientIdCount, incomingMessage.SenderConnection, _beatnum);
 
-            _activePlayers.Add(newPlayer);
+            _activeClients.Add(newClient);
 
             //Wait before sending back, client may be slower! <-- Tricky code
             Thread.Sleep(2000);
@@ -214,7 +223,7 @@ namespace LidgrenTestServer
             // Assign Id number to client
             _outgoingMessage = Server.CreateMessage();
             _outgoingMessage.Write((byte)PacketTypes.AssignId);
-            _outgoingMessage.Write(_playerIdCount);
+            _outgoingMessage.Write(_clientIdCount);
             Server.SendMessage(_outgoingMessage, incomingMessage.SenderConnection, NetDeliveryMethod.ReliableOrdered, 1);
 
             foreach (ServerRoom serverRoom in _serverRooms)
@@ -226,17 +235,7 @@ namespace LidgrenTestServer
                 Server.SendMessage(_outgoingMessage, incomingMessage.SenderConnection, NetDeliveryMethod.ReliableOrdered, 2);
             }
         }
-
-        public void SendPlayerToPlayer(Player sendPlayer, Player toPlayer)
-        {
-            _outgoingMessage = Server.CreateMessage();
-            _outgoingMessage.Write((byte)PacketTypes.AddPlayer);
-            _outgoingMessage.Write(sendPlayer.Id);
-            _outgoingMessage.Write(sendPlayer.Name);
-            _outgoingMessage.Write(sendPlayer.Position);
-            Server.SendMessage(_outgoingMessage, toPlayer.Connection, NetDeliveryMethod.ReliableOrdered, 7);
-        }
-
+        
         //public void AddPlayerToGame(NetIncomingMessage incomingMessage)
         //{
         //    Console.WriteLine("Assigning new player the name of: Player " + ++_playerIdCount);
@@ -313,38 +312,42 @@ namespace LidgrenTestServer
         {
             Console.WriteLine(incomingMessage.SenderConnection + " status changed. " + incomingMessage.SenderConnection.Status);
 
-            Player player = _activePlayers.Find(p => p.Connection == incomingMessage.SenderConnection);
+            Client client = _activeClients.Find(c => c.Connection == incomingMessage.SenderConnection);
 
-            if (player == null)
+            if (client == null)
             {
-                return; //Don't accept data from connections that don't have a player attached
+                return; //Don't accept data from connections that don't have a client attached
             }
 
             NetConnectionStatus status = (NetConnectionStatus)incomingMessage.ReadByte();
             string reason = incomingMessage.ReadString();
 
-            if (player.Connection.Status == NetConnectionStatus.Disconnected || player.Connection.Status == NetConnectionStatus.Disconnecting)
+            if (client.Connection.Status == NetConnectionStatus.Disconnected || client.Connection.Status == NetConnectionStatus.Disconnecting)
             {
                 //SendLobbyMessage("Server", player.Name + " (Id" + player.Id + ") has disconnected.");
-                _activePlayers.Remove(player);
+                _activeClients.Remove(client);
 
                 if (Server.Connections.Count > 0)
                 {
                     _outgoingMessage = Server.CreateMessage();
-                    _outgoingMessage.Write((byte)PacketTypes.RemovePlayer);
-                    _outgoingMessage.Write((Int16)player.Id);
-                    Server.SendMessage(_outgoingMessage, Server.Connections, NetDeliveryMethod.ReliableOrdered, 1);
-
-                    _outgoingMessage = Server.CreateMessage();
                     _outgoingMessage.Write((byte)PacketTypes.PlayerCount);
-                    _outgoingMessage.Write((Int16)_activePlayers.Count);
+                    _outgoingMessage.Write((Int16)_activeClients.Count);
                     Server.SendMessage(_outgoingMessage, Server.Connections, NetDeliveryMethod.ReliableOrdered, 6);
                 }
             }
-            Console.WriteLine(player.Name + " (Id" + player.Id + ") status changed to " + status + " (" + reason + ") " + _activePlayers.Count);
+            Console.WriteLine("Client id " + client.Id + "; status changed to " + status + " (" + reason + ") " + ". Clients left: " + _activeClients.Count);
         }
 
         #endregion
 
+
+        public void SendPlayerToPlayer(Client sendPlayer, Client toPlayer)
+        {
+            _outgoingMessage = Server.CreateMessage();
+            _outgoingMessage.Write((byte)PacketTypes.AddPlayer);
+            _outgoingMessage.Write(sendPlayer.AttachedPlayer.Name);
+            _outgoingMessage.Write(sendPlayer.AttachedPlayer.Position);
+            Server.SendMessage(_outgoingMessage, toPlayer.Connection, NetDeliveryMethod.ReliableOrdered, 7);
+        }
     }
 }
