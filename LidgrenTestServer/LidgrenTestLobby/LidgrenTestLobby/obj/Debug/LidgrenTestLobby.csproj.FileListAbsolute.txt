@@ -1,0 +1,17 @@
+C:\Users\Edutainment games\Documents\Repositories\LidgrenTest-Project\LidgrenTestServer\LidgrenTestLobby\LidgrenTestLobby\bin\Debug\LidgrenTestLobby.exe.config
+C:\Users\Edutainment games\Documents\Repositories\LidgrenTest-Project\LidgrenTestServer\LidgrenTestLobby\LidgrenTestLobby\bin\Debug\LidgrenTestLobby.exe
+C:\Users\Edutainment games\Documents\Repositories\LidgrenTest-Project\LidgrenTestServer\LidgrenTestLobby\LidgrenTestLobby\bin\Debug\LidgrenTestLobby.pdb
+C:\Users\Edutainment games\Documents\Repositories\LidgrenTest-Project\LidgrenTestServer\LidgrenTestLobby\LidgrenTestLobby\obj\Debug\LidgrenTestLobby.csprojResolveAssemblyReference.cache
+C:\Users\Edutainment games\Documents\Repositories\LidgrenTest-Project\LidgrenTestServer\LidgrenTestLobby\LidgrenTestLobby\obj\Debug\App.g.cs
+C:\Users\Edutainment games\Documents\Repositories\LidgrenTest-Project\LidgrenTestServer\LidgrenTestLobby\LidgrenTestLobby\obj\Debug\LidgrenTestLobby_MarkupCompile.cache
+C:\Users\Edutainment games\Documents\Repositories\LidgrenTest-Project\LidgrenTestServer\LidgrenTestLobby\LidgrenTestLobby\obj\Debug\LidgrenTestLobby_MarkupCompile.lref
+C:\Users\Edutainment games\Documents\Repositories\LidgrenTest-Project\LidgrenTestServer\LidgrenTestLobby\LidgrenTestLobby\obj\Debug\LidgrenTestLobby.g.resources
+C:\Users\Edutainment games\Documents\Repositories\LidgrenTest-Project\LidgrenTestServer\LidgrenTestLobby\LidgrenTestLobby\obj\Debug\LidgrenTestLobby.Properties.Resources.resources
+C:\Users\Edutainment games\Documents\Repositories\LidgrenTest-Project\LidgrenTestServer\LidgrenTestLobby\LidgrenTestLobby\obj\Debug\LidgrenTestLobby.csproj.GenerateResource.Cache
+C:\Users\Edutainment games\Documents\Repositories\LidgrenTest-Project\LidgrenTestServer\LidgrenTestLobby\LidgrenTestLobby\obj\Debug\LidgrenTestLobby.exe
+C:\Users\Edutainment games\Documents\Repositories\LidgrenTest-Project\LidgrenTestServer\LidgrenTestLobby\LidgrenTestLobby\obj\Debug\LidgrenTestLobby.pdb
+C:\Users\Edutainment games\Documents\Repositories\LidgrenTest-Project\LidgrenTestServer\LidgrenTestLobby\LidgrenTestLobby\obj\Debug\Lobby.g.cs
+C:\Users\Edutainment games\Documents\Repositories\LidgrenTest-Project\LidgrenTestServer\LidgrenTestLobby\LidgrenTestLobby\obj\Debug\Lobby.baml
+C:\Users\Edutainment games\Documents\Repositories\LidgrenTest-Project\LidgrenTestServer\LidgrenTestLobby\LidgrenTestLobby\bin\Debug\Lidgren.Network.dll
+C:\Users\Edutainment games\Documents\Repositories\LidgrenTest-Project\LidgrenTestServer\LidgrenTestLobby\LidgrenTestLobby\bin\Debug\UnityEngine.dll
+C:\Users\Edutainment games\Documents\Repositories\LidgrenTest-Project\LidgrenTestServer\LidgrenTestLobby\LidgrenTestLobby\bin\Debug\UnityEngine.xml
