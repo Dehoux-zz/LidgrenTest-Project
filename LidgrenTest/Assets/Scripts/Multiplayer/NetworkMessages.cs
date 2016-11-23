@@ -6,12 +6,12 @@ public static class NetworkMessages
 {
     public static void SendPlayerUpdate(int id, float xPos, float yPos)
     {
-        NetOutgoingMessage netOutgoingMessage = ServerConnection.CreateNetOutgoingMessage();
+        NetOutgoingMessage netOutgoingMessage = ServerConnection.Instance.CreateNetOutgoingMessage();
         netOutgoingMessage.Write((byte)PackageTypes.PlayerMovement);
         netOutgoingMessage.Write(id);
         netOutgoingMessage.Write(xPos);
         netOutgoingMessage.Write(yPos);
-        ServerConnection.SendNetOutgoingMessage(netOutgoingMessage, NetDeliveryMethod.ReliableOrdered, 2);
+        ServerConnection.Instance.SendNetOutgoingMessage(netOutgoingMessage, NetDeliveryMethod.ReliableOrdered, 2);
     }
 
 

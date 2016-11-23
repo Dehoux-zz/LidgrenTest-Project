@@ -43,7 +43,7 @@ public sealed class NetworkManager : MonoBehaviour
         activePlayers = new List<Player>();
 
         DebugConsole.Log("Establishing connection to server");
-        ServerConnection.CreateConnection("LidgrenTest", hostIp, 12484, "SecretValue");
+        ServerConnection.Instance.CreateConnection("LidgrenTest", hostIp, 12484, "SecretValue");
 
         lastSec = Time.time;
     }
@@ -55,7 +55,7 @@ public sealed class NetworkManager : MonoBehaviour
 
     void Update()
     {
-        ServerConnection.CheckIncomingMessage();
+        ServerConnection.Instance.CheckIncomingMessage();
 
         //if (Input.GetKeyDown(KeyCode.E))
         //{
@@ -79,13 +79,13 @@ public sealed class NetworkManager : MonoBehaviour
 
     void Shutdown()
     {
-        ServerConnection.StopConnection();
+        ServerConnection.Instance.StopConnection();
         DebugConsole.Log("Closing client connection...");
     }
 
     void OnApplicationQuit()
     {
-        ServerConnection.StopConnection();
+        ServerConnection.Instance.StopConnection();
         DebugConsole.Log("Closing client connection...");
     }
 
@@ -103,16 +103,23 @@ public sealed class NetworkManager : MonoBehaviour
 
     public void AddRoomToLobby(NetIncomingMessage netIncomingMessage)
     {
-        Room newRoom = ((GameObject) Instantiate(new GameObject("Room"), Vector3.zero, Quaternion.identity)).AddComponent<Room>();
-        newRoom.Id = netIncomingMessage.ReadInt32();
-        newRoom.Name = netIncomingMessage.ReadString();
-        
+        Room newRoom = new Room
+        {
+            Id = netIncomingMessage.ReadInt32(),
+            Name = netIncomingMessage.ReadString()
+        };
+
         lobby.AddRoom(newRoom);
     }
 
-    public Lobby GetLobby()
+    public List<Room> GetLobby()
     {
-        return lobby;
+        return lobby.GetRooms();
+    }
+
+    public void RefreshLobby()
+    {
+        lobby.RequestRooms();
     }
 
     public void JoinRoom(Room room)

@@ -32,4 +32,13 @@ public class Lobby {
     {
         return lobbyPlayers.Find(x => x.Id == playerId);
     }
+
+    public void RequestRooms()
+    {
+        rooms = new List<Room>();
+
+        NetOutgoingMessage netOutgoingMessage = ServerConnection.Instance.CreateNetOutgoingMessage();
+        netOutgoingMessage.Write((byte)PackageTypes.RefreshRooms);
+        ServerConnection.Instance.SendNetOutgoingMessage(netOutgoingMessage, NetDeliveryMethod.ReliableOrdered, 4);
+    }
 }

@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Lidgren.Network;
 
@@ -19,15 +21,18 @@ namespace LidgrenTestLobby
             Id = id;
             Connection = connection;
             LastBeat = curBeat;
-            //maybe add wait?
+
             AssignIdToClient();
         }
         
         /// <summary>
         /// Let the Client know he has been accepted by the server and has been given an ID.
         /// </summary>
-        private void AssignIdToClient()
+        private async void AssignIdToClient()
         {
+            //Wait a moment before sending to client, client may not be ready yet <--- tricky code
+            await Task.Delay(2000);
+
             NetOutgoingMessage outgoingMessage = LobbyManager.Server.CreateMessage();
             outgoingMessage.Write((byte)PacketTypes.AssignId);
             outgoingMessage.Write(Id);
@@ -35,7 +40,7 @@ namespace LidgrenTestLobby
 
             outgoingMessage = LobbyManager.Server.CreateMessage();
             outgoingMessage.Write((byte)PacketTypes.Message);
-            outgoingMessage.Write("You (Client: " + Id + ") now got an ID, welkom on the Server.");
+            outgoingMessage.Write("You (Client: " + Id + ") now got an ID, welcome on the Server.");
             LobbyManager.Server.SendMessage(outgoingMessage, Connection, NetDeliveryMethod.ReliableOrdered, 0);
         }
 

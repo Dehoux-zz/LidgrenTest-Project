@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class Room : MonoBehaviour
+public class Room
 {
 
     public int Id;
@@ -23,7 +23,7 @@ public class Room : MonoBehaviour
 
     public void LocalPlayerJoinsRoom(int playerId)
     {
-        GameObject newPlayerGameObject = (GameObject)Instantiate(PlayerPrefab, new Vector2(0, 0), Quaternion.identity);
+        GameObject newPlayerGameObject = (GameObject)GameObject.Instantiate(PlayerPrefab, new Vector2(0, 0), Quaternion.identity);
         Player newPlayer = newPlayerGameObject.GetComponent<Player>();
         newPlayer.Id = playerId;
         newPlayer.name = "Player " + playerId;

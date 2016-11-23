@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Security.Policy;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -23,34 +24,30 @@ namespace LidgrenTestLobby
     /// </summary>
     public partial class Lobby : Window
     {
+        private TextBoxOutputter _textBoxOutputter;
+
+        public bool IsVisble ;
+
         public Lobby()
         {
             InitializeComponent();
 
             //Set console output to debug panel
-            Console.SetOut(new TextBoxOutputter(TestBox));
-            
-            for (int i = 0; i < 10; i++)
-            {
-                MenuItem client = new MenuItem{ Title = "Client: " + i };
-                client.Items.Add(new MenuItem{ Title = "Client ID: " + i });
-                client.Items.Add(new MenuItem{ Title = "Connection: " });
-                client.Items.Add(new MenuItem{ Title = "Online since: " });
-                ClientTree.Items.Add(client);
-            }
+            _textBoxOutputter = new TextBoxOutputter(TestBox);
+            Console.SetOut(_textBoxOutputter);
 
-            for (int i = 0; i < 4; i++)
-            {
-                MenuItem room = new MenuItem{ Title = "Room: " + i };
-                room.Items.Add(new MenuItem { Title = "Room ID: " + i });
-                MenuItem clients = new MenuItem { Title = "Clients" };
-                for (int j = 0; j < 4; j++)
-                {
-                    clients.Items.Add(new MenuItem { Title = "Client with ID" });
-                }
-                room.Items.Add(clients);
-                RoomTree.Items.Add(room);
-            }
+            //for (int i = 0; i < 4; i++)
+            //{
+            //    MenuItem room = new MenuItem { Title = "Room: " + i };
+            //    room.Items.Add(new MenuItem { Title = "Room ID: " + i });
+            //    MenuItem clients = new MenuItem { Title = "Clients" };
+            //    for (int j = 0; j < 4; j++)
+            //    {
+            //        clients.Items.Add(new MenuItem { Title = "Client with ID" });
+            //    }
+            //    room.Items.Add(clients);
+            //    RoomTree.Items.Add(room);
+            //}
 
         }
 
@@ -63,6 +60,12 @@ namespace LidgrenTestLobby
             LobbyManager.Instance.InitialiseServerManager(serverport, maxconnections, approvalMessage);
 
             LobbyManager.Instance.StartServer();
+
+            StartServerButton.Visibility = Visibility.Collapsed;
+            StopServerButton.Visibility = Visibility.Visible;
+            RefreshRoomsButton.IsEnabled = true;
+            RefreshClientsButton.IsEnabled = true;
+            AddRoomButton.IsEnabled = true;
         }
 
 
@@ -71,11 +74,57 @@ namespace LidgrenTestLobby
             Console.WriteLine("Stop pressed");
 
             LobbyManager.Instance.StopServer();
+
+            StartServerButton.Visibility = Visibility.Visible;
+            StopServerButton.Visibility = Visibility.Collapsed;
+            RefreshRoomsButton.IsEnabled = false;
+            RefreshClientsButton.IsEnabled = false;
+            AddRoomButton.IsEnabled = false;
+
+            ClientTree.Items.Clear();
+            RoomTree.Items.Clear();
         }
 
-        public void Test(object sender, RoutedEventArgs routedEventArgs)
+        public void ClearConsole(object sender, RoutedEventArgs routedEventArgs)
         {
-            Console.WriteLine("Test");
+            _textBoxOutputter.Flush();
+        }
+
+        public void RefreshClients(object sender, RoutedEventArgs routedEventArgs)
+        {
+            ClientTree.Items.Clear();
+            List<Client> clients = LobbyManager.Instance.GetClients();
+            foreach (Client client in clients)
+            {
+                MenuItem clientMenutItem = new MenuItem { Title = "Client: " + client.Id };
+                clientMenutItem.Items.Add(new MenuItem { Title = "Client ID: " + client.Id });
+                clientMenutItem.Items.Add(new MenuItem { Title = "Connection: " + client.Connection });
+                clientMenutItem.Items.Add(new MenuItem { Title = "Online since: " + client.LastBeat });
+                ClientTree.Items.Add(clientMenutItem);
+            }
+        }
+
+        public void RefreshRooms(object sender, RoutedEventArgs routedEventArgs)
+        {
+            RoomTree.Items.Clear();
+            List<Room> rooms = LobbyManager.Instance.GetRooms();
+            foreach (Room room in rooms)
+            {
+                MenuItem roomMenutItem = new MenuItem { Title = "Room: " + room.Id };
+                roomMenutItem.Items.Add(new MenuItem { Title = "Room ID: " + room.Id });
+                MenuItem players = new MenuItem { Title = "Players" };
+                foreach (Player player in room.Players)
+                {
+                    players.Items.Add(new MenuItem { Title = "Client ID: " + player.Id });
+                }
+                roomMenutItem.Items.Add(players);
+                RoomTree.Items.Add(roomMenutItem);
+            }
+        }
+
+        private void AddRoom(object sender, RoutedEventArgs routedEventArgs)
+        {
+            LobbyManager.Instance.AddRoom();
         }
     }
 
@@ -116,6 +165,12 @@ namespace LidgrenTestLobby
                 _textBox.AppendText(value.ToString());
             }));
         }
+
+        public override void Flush()
+        {
+            _textBox.Clear();
+        }
+
 
         public override Encoding Encoding => Encoding.UTF8;
     }

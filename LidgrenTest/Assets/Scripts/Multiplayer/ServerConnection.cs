@@ -17,7 +17,8 @@ public enum PackageTypes
     KeepAlive,
     PlayerJump,
     AddRoom,
-    EnterRoom
+    EnterRoom,
+    RefreshRooms
 }
 
 public sealed class ServerConnection
@@ -25,17 +26,15 @@ public sealed class ServerConnection
 
     private static volatile ServerConnection _instance;
     private static object syncRoot = new object();
-    private static float lastSec = 0f;
+    private float lastSec = 0f;
 
-    public static NetClient Client;
-    public static int ClientId;
-    public static float Roundtriptime = 0f;
+    public NetClient Client;
+    public int ClientId;
+    public float Roundtriptime = 0f;
 
-    public static string HostIp;
-    public static int HostPort;
-    public static string ConnectionValue;
-
-    public static int TestCounter = 0;
+    public string HostIp;
+    public int HostPort;
+    public string ConnectionValue;
 
     /// <summary>
     /// Getter and creator of the ServerConnecton class.
@@ -61,7 +60,7 @@ public sealed class ServerConnection
     /// <param name="hostIp">IP of the host</param>
     /// <param name="hostPort">Port where the server is running</param>
     /// <param name="connectionValue">Secret value to connection approval</param>
-    public static void CreateConnection(string serverGameName, string hostIp, int hostPort, string connectionValue) //more constructors for additional options (like maxnumberconnections)
+    public void CreateConnection(string serverGameName, string hostIp, int hostPort, string connectionValue) //more constructors for additional options (like maxnumberconnections)
     {
         NetPeerConfiguration connectionConfig = new NetPeerConfiguration(serverGameName);
         //additional config options...
@@ -78,17 +77,17 @@ public sealed class ServerConnection
         lastSec = Time.time;
     }
 
-    public static NetOutgoingMessage CreateNetOutgoingMessage()
+    public NetOutgoingMessage CreateNetOutgoingMessage()
     {
         return Client.CreateMessage();
     }
 
-    public static void SendNetOutgoingMessage(NetOutgoingMessage outgoingMessage, NetDeliveryMethod networkDeliveryMethod, int channel)
+    public void SendNetOutgoingMessage(NetOutgoingMessage outgoingMessage, NetDeliveryMethod networkDeliveryMethod, int channel)
     {
         Client.SendMessage(outgoingMessage, networkDeliveryMethod, channel);
     }
 
-    public static void StopConnection()
+    public void StopConnection()
     {
         NetOutgoingMessage outgoingMessage = Client.CreateMessage();
         outgoingMessage.Write((byte)PackageTypes.Disconnect);
@@ -96,14 +95,14 @@ public sealed class ServerConnection
         Client.Shutdown(": Bye All");
     }
 
-    public static void SendKeepAlive()
+    public void SendKeepAlive()
     {
         NetOutgoingMessage outgoingMessage = Client.CreateMessage();
         outgoingMessage.Write((byte)PackageTypes.KeepAlive);
         Client.SendMessage(outgoingMessage, NetDeliveryMethod.ReliableUnordered, 4);
     }
 
-    public static void CheckIncomingMessage()
+    public void CheckIncomingMessage()
     {
         if (Client.Status == NetPeerStatus.Running)
         {
@@ -121,7 +120,7 @@ public sealed class ServerConnection
                                 //When connected to the server
                                 case NetConnectionStatus.Connected:
                                     {
-                                        DebugConsole.Log("yey connected: " + TestCounter);
+                                        DebugConsole.Log("Connected, awaiting connection approval");
 
                                     }
                                     break;
@@ -142,7 +141,6 @@ public sealed class ServerConnection
 
                     case NetIncomingMessageType.Data:
                         {
-                            TestCounter++;
                             switch ((PackageTypes)incomingMessage.ReadByte())
                             {
                                 case PackageTypes.Message:
@@ -153,6 +151,7 @@ public sealed class ServerConnection
                                 case PackageTypes.AssignId:
                                     {
                                         ClientId = incomingMessage.ReadInt32();
+                                        NetworkManager.Instance.WriteConsoleMessage("ID is set to: " + ClientId);
                                         NetworkManager.Instance.MyClientId = ClientId;
                                     }
                                     break;
@@ -194,7 +193,7 @@ public sealed class ServerConnection
                                         //}
                                         //else
                                         //{
-                                            outgoingMessage.Write(Vector2.zero);
+                                        outgoingMessage.Write(Vector2.zero);
                                         //}
                                         Client.SendMessage(outgoingMessage, NetDeliveryMethod.ReliableOrdered, 4);
                                         Roundtriptime = incomingMessage.ReadFloat();

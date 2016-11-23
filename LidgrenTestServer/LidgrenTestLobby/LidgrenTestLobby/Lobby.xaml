@@ -6,11 +6,15 @@
         xmlns:local="clr-namespace:LidgrenTestLobby"
         xmlns:system="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
-        Title="Lobby" Height="800" Width="1000">
+        Title="Lobby" Height="800" Width="1200">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="b2v" />
+    </Window.Resources>
+    
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="2*"/>
+            <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
@@ -18,38 +22,38 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="*" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- Control panel -->
-        <StackPanel Grid.Column="0" Grid.Row="0" Grid.ColumnSpan="3" Orientation="Horizontal">
-            <Button Content="Start Server" Margin="10" Click="StartLobbyServer"/>
-            <Button Content="Stop Server" Margin="10"  Click="StopLobbyServer"/>
-            <Button Content="Test Button" Margin="10"  Click="Test"/>
 
+        <!-- Control panel -->
+        <StackPanel Grid.Column="0" Grid.Row="0" Orientation="Horizontal">
+            <Button x:Name="StartServerButton" Content="Start Server" Margin="10" Click="StartLobbyServer"/>
+            <Button x:Name="StopServerButton" Visibility="Collapsed" Content="Stop Server" Margin="10" Click="StopLobbyServer"/>
+            <Button x:Name="ClearConsoleButton" Content="Clear Console" Margin="10" Click="ClearConsole"/>
+            <Button x:Name="AddRoomButton" IsEnabled="False" Content="Add Room" Margin="10" Click="AddRoom"/>
+        </StackPanel>
+
+        <!-- Refresh panels -->
+        <StackPanel Grid.Column="1" Grid.Row="0" Orientation="Vertical">
+            <Button x:Name="RefreshRoomsButton" IsEnabled="False" Content="Refresh Rooms" Margin="20" Click="RefreshRooms"/>
         </StackPanel>
         
+        <StackPanel Grid.Column="2" Grid.Row="0" Orientation="Vertical">
+            <Button x:Name="RefreshClientsButton" IsEnabled="False" Content="Refresh Clients" Margin="20" Click="RefreshClients"/>
+        </StackPanel>
         
-        <Button Grid.Column="0" Grid.Row="1" Grid.RowSpan="3">Extra</Button>
-        
-        <!-- Rooms view -->
-        <TreeView Grid.Column="1" Grid.Row="1" Name="RoomTree">
+        <!-- Clients view -->
+        <TreeView Grid.Column="2" Grid.Row="1" Grid.RowSpan="4" Name="ClientTree">
             <TreeView.ItemTemplate>
                 <HierarchicalDataTemplate DataType="{x:Type MenuItem}" ItemsSource="{Binding Items}">
                     <TextBlock Text="{Binding Title}" />
                 </HierarchicalDataTemplate>
             </TreeView.ItemTemplate>
-        </TreeView>        
-        
-        <!-- Console log -->
-        <DockPanel Grid.Column="1" Grid.Row="2" Grid.RowSpan="2">
-            <TextBlock DockPanel.Dock="Top" Padding="10" Background="Gray" TextAlignment="Center">Console Log</TextBlock>
-            <ScrollViewer>
-                <TextBox ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto" Padding="10"  x:Name="TestBox"/>
-            </ScrollViewer>
-        </DockPanel>
-        
-        <!-- Clients view -->
-        <TreeView Grid.Column="2" Grid.Row="1" Grid.RowSpan="3" Name="ClientTree">
+        </TreeView>
+
+        <!-- Rooms view -->
+        <TreeView Grid.Column="1" Grid.Row="1" Grid.RowSpan="4" Name="RoomTree">
             <TreeView.ItemTemplate>
                 <HierarchicalDataTemplate DataType="{x:Type MenuItem}" ItemsSource="{Binding Items}">
                     <TextBlock Text="{Binding Title}" />
@@ -58,7 +62,16 @@
         </TreeView>
 
 
+        <!-- Room info panel -->
+        <Button Grid.Column="0" Grid.Row="1" Grid.RowSpan="2">Room info</Button>
 
+        <!-- Console log -->
+        <DockPanel Grid.Column="0" Grid.Row="3" Grid.RowSpan="2">
+            <TextBlock DockPanel.Dock="Top" Padding="10" Background="Gray" TextAlignment="Center">Console Log</TextBlock>
+            <ScrollViewer>
+                <TextBox ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto" Padding="10"  x:Name="TestBox"/>
+            </ScrollViewer>
+        </DockPanel>
     </Grid>
 
 

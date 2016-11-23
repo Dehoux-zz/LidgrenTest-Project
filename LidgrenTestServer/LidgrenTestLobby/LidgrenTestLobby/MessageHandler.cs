@@ -26,12 +26,14 @@ namespace LidgrenTestLobby
         KeepAlive,
         PlayerJump,
         AddRoom,
-        EnterRoom
+        EnterRoom,
+        RefreshRooms
     }
 
     class MessageHandler
     {
         private static LobbyManager _lobbyManager = LobbyManager.Instance;
+        private static List<NetConnection> _handlingApproval = new List<NetConnection>();
 
         public static void Register(object fromPlayer)
         {
@@ -45,6 +47,8 @@ namespace LidgrenTestLobby
                         {
                             if (client != null)
                                 break;
+
+                            _handlingApproval.Add(incomingMessage.SenderConnection);
                             _lobbyManager.ManageConnectionAppovalClient(incomingMessage);
                         }
                         break;
@@ -94,6 +98,11 @@ namespace LidgrenTestLobby
                             case PacketTypes.EnterRoom:
                                 {
 
+                                }
+                                break;
+                            case PacketTypes.RefreshRooms:
+                                {
+                                    _lobbyManager.SentRooms(incomingMessage);
                                 }
                                 break;
 

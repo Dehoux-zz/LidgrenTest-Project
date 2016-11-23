@@ -218,19 +218,19 @@ public class Player : MonoBehaviour
 
     public void NetOutgoingMessagePlayerMove()
     {
-        NetOutgoingMessage netOutgoingMessage = ServerConnection.CreateNetOutgoingMessage();
+        NetOutgoingMessage netOutgoingMessage = ServerConnection.Instance.CreateNetOutgoingMessage();
         netOutgoingMessage.Write((byte)PackageTypes.PlayerMovement);
         netOutgoingMessage.Write((Vector2)transform.position);
         netOutgoingMessage.Write(velocity);
         netOutgoingMessage.Write(grounded);
-        ServerConnection.SendNetOutgoingMessage(netOutgoingMessage, NetDeliveryMethod.ReliableOrdered, 10);
+        ServerConnection.Instance.SendNetOutgoingMessage(netOutgoingMessage, NetDeliveryMethod.ReliableOrdered, 10);
     }
 
     public void NetOutgoingMessagePlayerJump()
     {
-        NetOutgoingMessage netOutgoingMessage = ServerConnection.CreateNetOutgoingMessage();
+        NetOutgoingMessage netOutgoingMessage = ServerConnection.Instance.CreateNetOutgoingMessage();
         netOutgoingMessage.Write((byte)PackageTypes.PlayerJump);
-        ServerConnection.SendNetOutgoingMessage(netOutgoingMessage, NetDeliveryMethod.ReliableOrdered, 11);
+        ServerConnection.Instance.SendNetOutgoingMessage(netOutgoingMessage, NetDeliveryMethod.ReliableOrdered, 11);
     }
 
 

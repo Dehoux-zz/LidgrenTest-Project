@@ -17,6 +17,9 @@ namespace LidgrenTestLobby
         private Task _gameLoopTask;
         private volatile bool _isRunning;
         private int _beatnum;
+        private TimeSpan _beatrate;
+        private DateTime _lastBeat;
+        private double _last15Sec;
 
         private List<Client> _clients;
         private List<Room> _rooms;
@@ -87,14 +90,36 @@ namespace LidgrenTestLobby
 
         #region GameLoop
 
+        /// <summary>
+        /// Checking if every client is still alive every 15 seconds
+        /// </summary>
         private async void RunGameLoop()
         {
             Console.WriteLine("Starting RunGameLoop Thread.");
 
+            _beatrate = new TimeSpan(0, 0, 1);
+
+            _lastBeat = DateTime.Now;
+
             int sendRate = 1000 / 66; // 1 sec = 1000ms as Sleep uses ms.
             for (_isRunning = true; _isRunning; await Task.Delay(sendRate))
             {
-                Console.Write(".");
+                // Handle dropping players and long idle connections. Note Client must send a KeepAlive packet within 15s
+                if (NetTime.Now > _last15Sec + 15)
+                {
+                    foreach (Client client in _clients)
+                    {
+                        if (client.KeepAlive > client.LastKeepAlive)
+                            client.LastKeepAlive = NetTime.Now;
+                        else if (client.KeepAlive != client.LastKeepAlive)
+                        {
+                            client.Connection.Deny("Client ID: " + client.Id + " idle connection's keepAlive " + client.KeepAlive + " is < lastKeepAlive " + client.LastKeepAlive);
+                        }
+                        else if (client.KeepAlive == client.LastKeepAlive)
+                            client.LastKeepAlive = NetTime.Now;
+                    }
+                    _last15Sec = NetTime.Now;
+                }
             }
             Console.WriteLine("Stopped RunGameLoop Thread.");
         }
@@ -108,19 +133,24 @@ namespace LidgrenTestLobby
             return _clients.Find(c => c.Connection == connection);
         }
 
+        public List<Client> GetClients()
+        {
+            return _clients;
+        }
+
         public void ManageConnectionAppovalClient(NetIncomingMessage incomingMessage)
         {
             string s = incomingMessage.ReadString();
             if (s == _approvalMessage)
             {
-                Console.WriteLine("Incoming message ConnectionApproval: Approved: " + incomingMessage.SenderConnection);
+                Console.WriteLine("Incoming ConnectionApproval: Approved: " + incomingMessage.SenderConnection);
                 incomingMessage.SenderConnection.Approve();
 
                 _clients.Add(new Client(_clients.Count, incomingMessage.SenderConnection, _beatnum));
             }
             else
             {
-                Console.WriteLine("Incoming message ConnectionApproval: Deny: " + incomingMessage.SenderConnection);
+                Console.WriteLine("Incoming ConnectionApproval: Denied: " + incomingMessage.SenderConnection);
                 incomingMessage.SenderConnection.Deny();
             }
         }
@@ -131,12 +161,36 @@ namespace LidgrenTestLobby
 
             _clients.Remove(client);
         }
-
-
-
-
-
+        
         #endregion
 
+        #region ManageRooms
+
+        public List<Room> GetRooms()
+        {
+            return _rooms;
+        }
+
+        public Room AddRoom()
+        {
+            Room newRoom = new Room();
+            _rooms.Add(newRoom);
+            return newRoom;
+        }
+
+        public void SentRooms(NetIncomingMessage incomingMessage)
+        {
+            foreach (Room room in _rooms)
+            {
+                NetOutgoingMessage outgoingMessage = Server.CreateMessage();
+                outgoingMessage.Write((byte)PacketTypes.AddRoom);
+                outgoingMessage.Write(room.Id);
+                outgoingMessage.Write(room.Name);
+                Server.SendMessage(outgoingMessage, incomingMessage.SenderConnection, NetDeliveryMethod.ReliableOrdered, 4);
+            }
+
+        }
+
+        #endregion
     }
 }
