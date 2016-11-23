@@ -8,14 +8,15 @@ using Lidgren.Network;
 
 namespace LidgrenTestLobby
 {
-    public class LobbyManager
+    class LobbyManager
     {
-        public NetServer Server { get; private set; }
+        public static NetServer Server { get; private set; }
         private NetPeerConfiguration _configuration;
         private string _approvalMessage;
 
-        private Thread _gameLoopThread;
+        private Task _gameLoopTask;
         private volatile bool _isRunning;
+        private int _beatnum;
 
         private List<Client> _clients;
         private List<Room> _rooms;
@@ -43,6 +44,7 @@ namespace LidgrenTestLobby
         #endregion
 
         #region ServerControl
+
         public void InitialiseServerManager(int gamePort, int maxPlayers, string approvalMessage)
         {
             // (needed for RegisterReceivedCallback, replace with AsyncOperationM... see CrabBattleServer)
@@ -69,31 +71,72 @@ namespace LidgrenTestLobby
             Server.Start();
             Console.WriteLine("Server Started");
 
-            _gameLoopThread = new Thread(RunGameLoop) { Name = "Game Loop Thread" };
-            _gameLoopThread.Start();
-            Thread.Sleep(500);
+            _gameLoopTask = new Task(RunGameLoop);
+            _gameLoopTask.Start();
         }
 
         public void StopServer()
         {
             Server?.Shutdown("Stopping Server");
-            _gameLoopThread?.Join();
+            _isRunning = false;
+            _gameLoopTask?.Wait();
             Console.WriteLine("Lidgren Testserver was shutdown.");
         }
+
         #endregion
 
         #region GameLoop
-        private void RunGameLoop()
+
+        private async void RunGameLoop()
         {
             Console.WriteLine("Starting RunGameLoop Thread.");
 
             int sendRate = 1000 / 66; // 1 sec = 1000ms as Sleep uses ms.
-            for (_isRunning = true; _isRunning; Thread.Sleep(sendRate))
+            for (_isRunning = true; _isRunning; await Task.Delay(sendRate))
             {
-                
+                Console.Write(".");
             }
             Console.WriteLine("Stopped RunGameLoop Thread.");
         }
+
         #endregion
+
+        #region ManageClients
+
+        public Client SearchClient(NetConnection connection)
+        {
+            return _clients.Find(c => c.Connection == connection);
+        }
+
+        public void ManageConnectionAppovalClient(NetIncomingMessage incomingMessage)
+        {
+            string s = incomingMessage.ReadString();
+            if (s == _approvalMessage)
+            {
+                Console.WriteLine("Incoming message ConnectionApproval: Approved: " + incomingMessage.SenderConnection);
+                incomingMessage.SenderConnection.Approve();
+
+                _clients.Add(new Client(_clients.Count, incomingMessage.SenderConnection, _beatnum));
+            }
+            else
+            {
+                Console.WriteLine("Incoming message ConnectionApproval: Deny: " + incomingMessage.SenderConnection);
+                incomingMessage.SenderConnection.Deny();
+            }
+        }
+
+        public void ManageDisonnectionClient(Client client)
+        {
+            Console.WriteLine("Client with client ID " + client.Id + " left the server, byebye.");
+
+            _clients.Remove(client);
+        }
+
+
+
+
+
+        #endregion
+
     }
 }

@@ -38,39 +38,32 @@ namespace LidgrenTestLobby
             NetIncomingMessage incomingMessage;
             if ((incomingMessage = ((NetServer)fromPlayer).ReadMessage()) != null && incomingMessage.SenderConnection != null)
             {
+                Client client = _lobbyManager.SearchClient(incomingMessage.SenderConnection);
                 switch (incomingMessage.MessageType)
                 {
                     case NetIncomingMessageType.ConnectionApproval:
                         {
-
-                            //_lobbyManager.ManageConnectionAppoval(incomingMessage);
-
+                            if (client != null)
+                                break;
+                            _lobbyManager.ManageConnectionAppovalClient(incomingMessage);
                         }
                         break;
                     case NetIncomingMessageType.Data:
 
-
-
-
-                        //Client client = _lobbyManager.SearchClient(incomingMessage.SenderConnection);
-                        //if (client == null || incomingMessage.LengthBytes < 1)
-                        //    break;
-
+                        if (client == null || incomingMessage.LengthBytes < 1)
+                            break;
 
                         switch ((PacketTypes)incomingMessage.ReadByte())
                         {
-                            #region ManageServer
+                            #region ManageClient
                             //Manage disconnect from client, remove player from ServerManager
                             case PacketTypes.Disconnect:
                                 {
-
+                                    _lobbyManager.ManageDisonnectionClient(client);
                                 }
                                 break;
-                            #endregion
 
-
-                            #region ManagePlayer
-                            //Save last best en position it has, for dubble check
+                            //Beat return, ??
                             case PacketTypes.Beat:
                                 {
 
@@ -81,21 +74,21 @@ namespace LidgrenTestLobby
                             //KeepAlive flag is raised, setting timestamp for further checks
                             case PacketTypes.KeepAlive:
                                 {
-
+                                    client.KeepAlive = NetTime.Now;
                                 }
                                 break;
 
                             //Handle player movement en send to all but the incommingmessage player
                             case PacketTypes.PlayerMovement:
                                 {
-
+                                    //Not yet implemented, maybe different kind of server system.
                                 }
                                 break;
 
                             //Handle player jump en send to all but the incommingmessage player
                             case PacketTypes.PlayerJump:
                                 {
-
+                                    //Not yet implemented, maybe different kind of server system.
                                 }
                                 break;
                             case PacketTypes.EnterRoom:
@@ -103,21 +96,28 @@ namespace LidgrenTestLobby
 
                                 }
                                 break;
-                            #endregion
 
-
-                            #region ManageClient
                             //Handle message send from a client and send a nice return message
                             case PacketTypes.Message:
                                 {
+                                    //Read incoming message
+                                    string clientMessage = incomingMessage.ReadString();
+                                    Console.WriteLine("Incoming message: " + clientMessage + " from " + incomingMessage.SenderConnection);
 
+                                    //Send return message
+                                    NetOutgoingMessage outgoingMessage = LobbyManager.Server.CreateMessage();
+                                    outgoingMessage.Write((byte)PacketTypes.Message);
+                                    outgoingMessage.Write("-THE SERVER has heard you, thank you for your kind message-");
+                                    LobbyManager.Server.SendMessage(outgoingMessage, incomingMessage.SenderConnection, NetDeliveryMethod.ReliableOrdered, 2);
                                 }
                                 break;
                                 #endregion
                         }
                         break;
                     case NetIncomingMessageType.StatusChanged:
-
+                        if (client == null)
+                            break;
+                        client.StatusChange(incomingMessage);
                         break;
                     default:
                         Console.WriteLine("Other kind of Message");

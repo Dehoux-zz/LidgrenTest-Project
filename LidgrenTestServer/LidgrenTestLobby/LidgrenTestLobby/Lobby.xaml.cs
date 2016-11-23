@@ -54,7 +54,7 @@ namespace LidgrenTestLobby
 
         }
 
-        public void StartLobbyServer()
+        public void StartLobbyServer(object sender, RoutedEventArgs routedEventArgs)
         {
             int serverport = 12484;
             int maxconnections = 4;
@@ -63,6 +63,19 @@ namespace LidgrenTestLobby
             LobbyManager.Instance.InitialiseServerManager(serverport, maxconnections, approvalMessage);
 
             LobbyManager.Instance.StartServer();
+        }
+
+
+        public void StopLobbyServer(object sender, RoutedEventArgs routedEventArgs)
+        {
+            Console.WriteLine("Stop pressed");
+
+            LobbyManager.Instance.StopServer();
+        }
+
+        public void Test(object sender, RoutedEventArgs routedEventArgs)
+        {
+            Console.WriteLine("Test");
         }
     }
 
