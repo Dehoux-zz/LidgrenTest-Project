@@ -1,15 +1,26 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using Lidgren.Network;
 
 public class Room
 {
 
-    public int Id;
+    public readonly int Id;
     public string Name;
     public GameObject PlayerPrefab;
     public GameObject localPlayer;
     public List<Player> roomPlayers;
+
+    public Room(int roomId)
+    {
+        Id = roomId;
+
+        NetOutgoingMessage netOutgoingMessage = ServerConnection.Instance.CreateNetOutgoingMessage();
+        netOutgoingMessage.Write((byte)PackageTypes.EnterRoom);
+        netOutgoingMessage.Write(Id);
+        ServerConnection.Instance.SendNetOutgoingMessage(netOutgoingMessage, NetDeliveryMethod.ReliableOrdered, 10);
+    }
 
     public Player FindPlayer(int playerId)
     {

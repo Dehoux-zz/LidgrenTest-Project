@@ -7,11 +7,13 @@ using Lidgren.Network;
 
 namespace LidgrenTestLobby
 {
-    class Player : Client
+    class Player
     {
-        public Player(int id, NetConnection connection, int curBeat) : base(id, connection, curBeat)
+        public Client Client;
+
+        public Player(Client client)
         {
-            
+            Client = client;
         }
     }
 }

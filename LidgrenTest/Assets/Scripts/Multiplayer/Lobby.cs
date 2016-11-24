@@ -6,16 +6,16 @@ using Lidgren.Network;
 public class Lobby {
 
     private List<Player> lobbyPlayers;
-    private List<Room> rooms; 
+    private List<int> roomIds; 
 
     public Lobby()
     {
-        rooms = new List<Room>();
+        roomIds = new List<int>();
     }
 
-    public List<Room> GetRooms()
+    public List<int> GetRoomIds()
     {
-        return rooms;
+        return roomIds;
     }
 
     public void AddPlayer(NetIncomingMessage netIncomingMessage)
@@ -23,9 +23,9 @@ public class Lobby {
 
     }
 
-    public void AddRoom(Room room)
+    public void AddRoomId(int roomId)
     {
-        rooms.Add(room);
+        roomIds.Add(roomId);
     }
 
     public Player FindPlayer(int playerId)
@@ -35,10 +35,16 @@ public class Lobby {
 
     public void RequestRooms()
     {
-        rooms = new List<Room>();
+        roomIds = new List<int>();
 
         NetOutgoingMessage netOutgoingMessage = ServerConnection.Instance.CreateNetOutgoingMessage();
         netOutgoingMessage.Write((byte)PackageTypes.RefreshRooms);
         ServerConnection.Instance.SendNetOutgoingMessage(netOutgoingMessage, NetDeliveryMethod.ReliableOrdered, 4);
+    }
+
+    public Room LocalPlayerJoinsRoom(int roomId)
+    {
+        Room room = new Room(roomId);
+        return room;
     }
 }

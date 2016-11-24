@@ -103,18 +103,12 @@ public sealed class NetworkManager : MonoBehaviour
 
     public void AddRoomToLobby(NetIncomingMessage netIncomingMessage)
     {
-        Room newRoom = new Room
-        {
-            Id = netIncomingMessage.ReadInt32(),
-            Name = netIncomingMessage.ReadString()
-        };
-
-        lobby.AddRoom(newRoom);
+        lobby.AddRoomId(netIncomingMessage.ReadInt32());
     }
 
-    public List<Room> GetLobby()
+    public List<int> GetLobby()
     {
-        return lobby.GetRooms();
+        return lobby.GetRoomIds();
     }
 
     public void RefreshLobby()
@@ -122,21 +116,13 @@ public sealed class NetworkManager : MonoBehaviour
         lobby.RequestRooms();
     }
 
-    public void JoinRoom(Room room)
+    public void JoinRoom(int roomId)
     {
-        room.LocalPlayerJoinsRoom(MyClientId);
-        CurrentRoom = room;
+        CurrentRoom = lobby.LocalPlayerJoinsRoom(roomId);
     }
 
     public void WriteConsoleMessage(string message)
     {
         DebugConsole.Log(message);
-    }
-
-    public void EnterRoom(int roomId)
-    {
-        //Get room from lobby
-        //Create room and add player
-        //Network shizzel etc.
     }
 }

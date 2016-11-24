@@ -26,28 +26,18 @@ namespace LidgrenTestLobby
     {
         private TextBoxOutputter _textBoxOutputter;
 
-        public bool IsVisble ;
+        public bool IsVisble;
+        
 
         public Lobby()
         {
             InitializeComponent();
 
             //Set console output to debug panel
-            _textBoxOutputter = new TextBoxOutputter(TestBox);
+            _textBoxOutputter = new TextBoxOutputter(ConsoleLog);
             Console.SetOut(_textBoxOutputter);
 
-            //for (int i = 0; i < 4; i++)
-            //{
-            //    MenuItem room = new MenuItem { Title = "Room: " + i };
-            //    room.Items.Add(new MenuItem { Title = "Room ID: " + i });
-            //    MenuItem clients = new MenuItem { Title = "Clients" };
-            //    for (int j = 0; j < 4; j++)
-            //    {
-            //        clients.Items.Add(new MenuItem { Title = "Client with ID" });
-            //    }
-            //    room.Items.Add(clients);
-            //    RoomTree.Items.Add(room);
-            //}
+
 
         }
 
@@ -82,10 +72,10 @@ namespace LidgrenTestLobby
             AddRoomButton.IsEnabled = false;
 
             ClientTree.Items.Clear();
-            RoomTree.Items.Clear();
+            RoomList.ItemsSource = null;
         }
 
-        public void ClearConsole(object sender, RoutedEventArgs routedEventArgs)
+        public void ClearConsoleLog(object sender, RoutedEventArgs routedEventArgs)
         {
             _textBoxOutputter.Flush();
         }
@@ -93,8 +83,7 @@ namespace LidgrenTestLobby
         public void RefreshClients(object sender, RoutedEventArgs routedEventArgs)
         {
             ClientTree.Items.Clear();
-            List<Client> clients = LobbyManager.Instance.GetClients();
-            foreach (Client client in clients)
+            foreach (Client client in LobbyManager.Instance.GetClients())
             {
                 MenuItem clientMenutItem = new MenuItem { Title = "Client: " + client.Id };
                 clientMenutItem.Items.Add(new MenuItem { Title = "Client ID: " + client.Id });
@@ -106,25 +95,34 @@ namespace LidgrenTestLobby
 
         public void RefreshRooms(object sender, RoutedEventArgs routedEventArgs)
         {
-            RoomTree.Items.Clear();
-            List<Room> rooms = LobbyManager.Instance.GetRooms();
-            foreach (Room room in rooms)
-            {
-                MenuItem roomMenutItem = new MenuItem { Title = "Room: " + room.Id };
-                roomMenutItem.Items.Add(new MenuItem { Title = "Room ID: " + room.Id });
-                MenuItem players = new MenuItem { Title = "Players" };
-                foreach (Player player in room.Players)
-                {
-                    players.Items.Add(new MenuItem { Title = "Client ID: " + player.Id });
-                }
-                roomMenutItem.Items.Add(players);
-                RoomTree.Items.Add(roomMenutItem);
-            }
+            RoomList.ItemsSource = LobbyManager.Instance.GetRooms();
         }
 
         private void AddRoom(object sender, RoutedEventArgs routedEventArgs)
         {
             LobbyManager.Instance.AddRoom();
+        }
+
+        private void RoomList_OnMouseDown(object sender, MouseButtonEventArgs routedEventArgs)
+        {
+            if (RoomList.SelectedItem != null)
+            {
+                Room room = (Room)RoomList.SelectedItem;
+                RoomLog.Text = string.Join("\r\n", room.RoomConsole.ToArray());
+                room.LogOutputBox = RoomLog;
+                playerCount.Text = "PlayerCount: " + room.Players.Count;
+                ClearRoomLogButton.IsEnabled = true;
+            }
+        }
+
+        private void ClearRoomLog(object sender, RoutedEventArgs routedEventArgs)
+        {
+            if (RoomList.SelectedItem != null)
+            {
+                Room room = (Room)RoomList.SelectedItem;
+                room.RoomConsole = new List<string>();
+                RoomLog.Text = string.Join("\r\n", room.RoomConsole.ToArray());
+            }
         }
     }
 

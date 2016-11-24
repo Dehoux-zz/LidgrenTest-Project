@@ -97,7 +97,8 @@ namespace LidgrenTestLobby
                                 break;
                             case PacketTypes.EnterRoom:
                                 {
-
+                                    int enterRoomId = incomingMessage.ReadInt32();
+                                    _lobbyManager.GetRoom(enterRoomId).ClientEntersRoom(client);
                                 }
                                 break;
                             case PacketTypes.RefreshRooms:

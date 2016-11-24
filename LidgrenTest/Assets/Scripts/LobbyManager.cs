@@ -37,22 +37,22 @@ public class LobbyManager : MonoBehaviour
         children.ForEach(child => Destroy(child));
         roomPanelPosition = 30;
 
-        foreach (Room room in _networkManager.GetLobby())
+        foreach (int roomId in _networkManager.GetLobby())
         {
             GameObject newRoomGameObject = (GameObject)Instantiate(RoomPrefab, new Vector2(0, 0), Quaternion.identity);
-            newRoomGameObject.GetComponentInChildren<Text>().text = room.Name;
+            newRoomGameObject.GetComponentInChildren<Text>().text = "RoomId " + roomId;
 
             newRoomGameObject.transform.SetParent(LobbyPanel.transform);
             newRoomGameObject.GetComponent<RectTransform>().localScale = new Vector3(1, 1, 1);
             newRoomGameObject.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, roomPanelPosition);
             roomPanelPosition -= 30;
 
-            newRoomGameObject.GetComponentInChildren<Button>().onClick.AddListener(() => { _networkManager.JoinRoom(room); });
+            newRoomGameObject.GetComponentInChildren<Button>().onClick.AddListener(() => { _networkManager.JoinRoom(roomId); });
         }
     }
 
     public void ClickedEnterRoom(int roomId)
     {
-        _networkManager.EnterRoom(roomId);
+        _networkManager.JoinRoom(roomId);
     }
 }
