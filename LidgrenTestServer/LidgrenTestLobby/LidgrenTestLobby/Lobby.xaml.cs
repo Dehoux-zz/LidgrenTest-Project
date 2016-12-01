@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Security.Policy;
@@ -96,6 +97,8 @@ namespace LidgrenTestLobby
         public void RefreshRooms(object sender, RoutedEventArgs routedEventArgs)
         {
             RoomList.ItemsSource = LobbyManager.Instance.GetRooms();
+            ICollectionView view = CollectionViewSource.GetDefaultView(RoomList);
+            view.Refresh();
         }
 
         private void AddRoom(object sender, RoutedEventArgs routedEventArgs)
