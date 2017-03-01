@@ -110,7 +110,7 @@ public sealed class ServerConnection
             NetIncomingMessage incomingMessage;
             if ((incomingMessage = Client.ReadMessage()) != null)
             {
-                Debug.Log(incomingMessage.MessageType);
+                //Debug.Log(incomingMessage.MessageType);
                 switch (incomingMessage.MessageType)
                 {
                     case NetIncomingMessageType.StatusChanged:
